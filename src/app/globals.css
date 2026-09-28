@@ -1,26 +1,133 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ==========================================================
+   ARABIC TYPOGRAPHY & RTL DEFAULTS
+   ========================================================== */
+html {
+  scroll-behavior: smooth;
+  direction: rtl;
+  text-align: right;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #FAFCFF;
+  color: #0F172A;
+  overflow-x: hidden;
+}
+
+/* ==========================================================
+   CUSTOM ANIMATIONS FOR LUXURY HOME SECTION
+   ========================================================== */
+
+/* 1. Navbar Border Tracing Stroke Animation */
+@keyframes traceBorder {
+  0% {
+    stroke-dashoffset: 2400;
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.animate-navbar-border {
+  stroke-dasharray: 2400;
+  stroke-dashoffset: 2400;
+  animation: traceBorder 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 2. Hero Image Entrance: Smooth From Top to Down */
+@keyframes slideInFromTop {
+  0% {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.96);
+    clip-path: inset(0 0 100% 0);
+  }
+  60% {
+    opacity: 0.9;
+    clip-path: inset(0 0 0% 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    clip-path: inset(0 0 0% 0);
+  }
+}
+
+.animate-image-from-top {
+  animation: slideInFromTop 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+}
+
+/* 3. Subtle Floating Physics for Image */
+@keyframes subtleFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-subtle-float {
+  animation: subtleFloat 5s ease-in-out infinite 1.4s;
+}
+
+/* 4. Diagonal Light Shimmer Sweep across Buttons */
+@keyframes buttonShimmer {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
+}
+
+.animate-shimmer {
+  animation: buttonShimmer 3.5s infinite;
+}
+
+/* 5. Live Radar Beacon Pulsing */
+@keyframes radarPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(37, 211, 102, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+  }
+}
+
+.animate-radar {
+  animation: radarPulse 2s infinite;
+}
+
+/* 6. Nav Link Underline: Left-to-Right Sweep */
+.nav-link-underline {
+  position: relative;
+}
+
+.nav-link-underline::after {
+  content: "";
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  width: 0%;
+  height: 2.5px;
+  background-color: #2563EB; /* Royal Blue */
+  border-radius: 9999px;
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-link-underline:hover::after {
+  width: 100%;
 }
