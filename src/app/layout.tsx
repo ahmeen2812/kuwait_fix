@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
 import "./globals.css";
-import { siteConfig } from "@/config/site";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
@@ -10,8 +10,8 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "خبراء صيانة الأجهزة المنزلية في الكويت | كويت فيكس",
-  description: "خدمة صيانة وتصليح الغسالات والمكيفات والثلاجات في الكويت. اتصل بنا على 50626275 لفحص فوري وخدمة منزلية معتمدة.",
+  title: "Kuwait Fix | Maintenance experts In Home appliances Kuwait",
+  description: "Prompt, certified, and reliable maintenance services for washing machines, air conditioners, and refrigerators in Kuwait.",
 };
 
 export default function RootLayout({
@@ -20,9 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="en">
       <body className={`${cairo.className} bg-[#FAFCFF] text-slate-900 antialiased`}>
-        <main>{children}</main>
+        <LanguageProvider>
+          <main>{children}</main>
+        </LanguageProvider>
       </body>
     </html>
   );

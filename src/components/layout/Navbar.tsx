@@ -3,19 +3,28 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { PhoneCall, Menu, X, Wrench, Sparkles, MessageCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { PhoneCall, Menu, X, Wrench, Globe } from "lucide-react";
 import { siteConfig } from "@/config/site";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const { language, toggleLanguage, t } = useLanguage();
+
+  const navItems = [
+    { title: t("home"), href: "/" },
+    { title: t("washingMachine"), href: "/washing-machine-repair" },
+    { title: t("acRepair"), href: "/ac-repair" },
+    { title: t("fridgeRepair"), href: "/refrigerator-repair" },
+  ];
 
   return (
     <header className="sticky top-0 z-50 pt-3 pb-3 px-4 sm:px-6 lg:px-8 bg-white/85 backdrop-blur-md transition-all">
-      {/* Outer Floating Nav Container with Animated Tracing Border */}
       <div className="relative max-w-7xl mx-auto bg-white/95 rounded-2xl shadow-[0_10px_30px_-10px_rgba(15,23,42,0.08)]">
         
-        {/* SVG Animated Perimeter Border (Starts from right, traces around on load) */}
+        {/* Animated Perimeter Border */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none rounded-2xl z-20"
           xmlns="http://www.w3.org/2000/svg"
@@ -43,43 +52,57 @@ export default function Navbar() {
         {/* Inner Content */}
         <div className="flex items-center justify-between h-20 px-6 sm:px-8 relative z-10">
           
-          {/* 1. Brand Logo */}
-          <Link href="/" className="flex items-center gap-3.5 group">
-            <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-slate-100 border border-blue-200/80 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-xs group-hover:scale-105 group-hover:border-blue-400 transition-all duration-300">
-              {!logoError ? (
-                <Image
-                  src={siteConfig.logoPath}
-                  alt={siteConfig.brandName}
-                  width={46}
-                  height={46}
-                  className="object-contain p-1"
-                  onError={() => setLogoError(true)}
-                />
-              ) : (
-                <Wrench className="w-5 h-5 text-blue-600 group-hover:rotate-45 transition-transform duration-300" />
-              )}
-            </div>
-            
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
-                  {siteConfig.brandName}
-                </span>
-                <span className="text-xs font-black bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
-                  Fix
-                </span>
-              </div>
-              <span className="text-[11px] font-bold text-slate-400 tracking-wider">
-                صيانة معتمدة بالكويت
+          {/* 1. Conversion Action & Language Toggle Button */}
+          <div className="hidden sm:flex items-center gap-3">
+            {/* Primary Action Button */}
+            <a
+              href={`tel:${siteConfig.phoneRaw}`}
+              className="relative inline-flex items-center justify-center overflow-hidden bg-blue-600 hover:bg-blue-700 text-white text-sm font-black px-6 py-2.5 rounded-full shadow-sm hover:shadow-md hover:shadow-blue-500/25 transition-all duration-300 group"
+            >
+              <span className="relative flex items-center gap-2">
+                <span>{t("contactUs")}</span>
+                <PhoneCall className="w-4 h-4 group-hover:scale-110 transition-transform" />
               </span>
-            </div>
-          </Link>
+            </a>
 
-          {/* 2. Navigation Links with Left-to-Right Underline on Hover */}
-          <nav className="hidden lg:flex items-center gap-8">
-            {siteConfig.navLinks.map((link) => (
+            {/* NEW ANIMATED LANGUAGE SWITCHER (Replaces WhatsApp button) */}
+            <motion.button
+              onClick={toggleLanguage}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative inline-flex items-center gap-2 bg-slate-50 hover:bg-blue-50/80 text-slate-800 hover:text-blue-600 border border-slate-200 hover:border-blue-400 text-sm font-extrabold px-4 py-2.5 rounded-full shadow-2xs transition-all duration-300 group overflow-hidden cursor-pointer"
+              title={language === "en" ? "تبديل إلى العربية" : "Switch to English"}
+            >
+              {/* Subtle background glow effect */}
+              <span className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+              {/* Rotating Globe Icon */}
+              <Globe className="w-4 h-4 text-blue-600 transition-transform duration-500 group-hover:rotate-180" />
+
+              {/* Animated Text Swap */}
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.span
+                  key={language}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.2 }}
+                  className="font-black text-xs sm:text-sm tracking-wide"
+                >
+                  {t("langButtonText")}
+                </motion.span>
+              </AnimatePresence>
+
+              {/* Active Dot Indicator */}
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            </motion.button>
+          </div>
+
+          {/* 2. Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-7">
+            {navItems.map((link) => (
               <Link
-                key={link.href}
+                key={link.title}
                 href={link.href}
                 className="nav-link-underline py-2 text-sm font-extrabold text-slate-700 hover:text-blue-600 transition-colors duration-200"
               >
@@ -88,41 +111,54 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {/* 3. Conversion Actions: WhatsApp & Unified "اتصل بنا" CTA */}
-          <div className="hidden sm:flex items-center gap-3.5">
-            {/* Quick WhatsApp button */}
-            <a
-              href={siteConfig.whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-300 hover:border-emerald-600 text-sm font-bold px-4 py-2.5 rounded-xl shadow-xs transition-all duration-300 group"
-            >
-              <MessageCircle className="w-4 h-4 text-emerald-600 group-hover:text-white transition-colors" />
-              <span>واتساب</span>
-            </a>
-
-            {/* Primary Action Button (Unified: اتصل بنا) */}
-            <a
-              href={`tel:${siteConfig.phoneRaw}`}
-              className="relative inline-flex items-center justify-center overflow-hidden bg-blue-600 hover:bg-blue-700 text-white text-sm font-black px-6 py-2.5 rounded-xl shadow-sm hover:shadow-md hover:shadow-blue-500/25 transition-all duration-300 group"
-            >
-              {/* Shimmer Light Reflection Sweep */}
-              <span className="absolute inset-0 w-1/2 h-full bg-white/20 transform -skew-x-12 animate-shimmer pointer-events-none" />
-
-              <span className="relative flex items-center gap-2">
-                <PhoneCall className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span>{siteConfig.unifiedCtaText}</span>
+          {/* 3. Brand Logo */}
+          <Link href="/" className="flex items-center gap-3.5 group">
+            <div className="flex flex-col text-right">
+              <div className="flex items-center gap-1.5 justify-end">
+                <span className="text-xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
+                  Kuwait Fix
+                </span>
+                <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-md border border-blue-200">
+                  Fix
+                </span>
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 tracking-wider">
+                {t("brandTag")}
               </span>
-            </a>
-          </div>
+            </div>
 
-          {/* 4. Mobile Menu Button */}
-          <div className="flex lg:hidden items-center">
+            <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-blue-50 to-slate-100 border border-blue-200/80 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-xs group-hover:scale-105 group-hover:border-blue-400 transition-all duration-300">
+              {!logoError ? (
+                <Image
+                  src={siteConfig.logoPath}
+                  alt="Kuwait Fix"
+                  width={42}
+                  height={42}
+                  className="object-contain p-1"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <Wrench className="w-5 h-5 text-blue-600 group-hover:rotate-45 transition-transform duration-300" />
+              )}
+            </div>
+          </Link>
+
+          {/* 4. Mobile Menu Toggle */}
+          <div className="flex lg:hidden items-center gap-2">
+            <motion.button
+              onClick={toggleLanguage}
+              whileTap={{ scale: 0.9 }}
+              className="p-2 rounded-lg border border-slate-200 text-xs font-bold flex items-center gap-1 bg-slate-50"
+            >
+              <Globe className="w-3.5 h-3.5 text-blue-600" />
+              <span>{t("langButtonText")}</span>
+            </motion.button>
+
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               type="button"
               className="p-2.5 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-blue-600 transition-colors"
-              aria-label="القائمة الرئيسية"
+              aria-label="Toggle menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -133,9 +169,9 @@ export default function Navbar() {
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
           <div className="lg:hidden bg-white border-t border-slate-100 rounded-b-2xl px-6 pt-4 pb-6 space-y-3 shadow-inner">
-            {siteConfig.navLinks.map((link) => (
+            {navItems.map((link) => (
               <Link
-                key={link.href}
+                key={link.title}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 text-base font-bold text-slate-800 hover:text-blue-600 border-b border-slate-50 transition-colors"
@@ -144,23 +180,13 @@ export default function Navbar() {
               </Link>
             ))}
 
-            <div className="pt-2 grid grid-cols-2 gap-2.5">
-              <a
-                href={siteConfig.whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 bg-[#25D366] text-white font-bold py-3 rounded-xl text-sm shadow-sm"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>واتساب</span>
-              </a>
-
+            <div className="pt-2">
               <a
                 href={`tel:${siteConfig.phoneRaw}`}
-                className="flex items-center justify-center gap-2 bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm"
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-black py-3 rounded-xl text-sm shadow-sm"
               >
+                <span>{t("contactUs")}</span>
                 <PhoneCall className="w-4 h-4" />
-                <span>{siteConfig.unifiedCtaText}</span>
               </a>
             </div>
           </div>
