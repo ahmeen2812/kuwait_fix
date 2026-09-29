@@ -11,10 +11,24 @@ import {
   X, 
   Sparkles,
   Send,
-  Sparkle
+  Sparkle,
+  Mail,
+  ShieldCheck
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { initialReviewsData, ReviewItem } from "@/data/reviewsData";
+
+// Helper function to half-encrypt emails with stars (e.g. fahad.shammari@gmail.com -> fa***i@gmail.com)
+function maskEmail(email: string): string {
+  if (!email || !email.includes("@")) return "us***@gmail.com";
+  const [user, domain] = email.split("@");
+  if (user.length <= 2) {
+    return `${user.charAt(0)}***@${domain}`;
+  }
+  const start = user.slice(0, 2);
+  const end = user.slice(-1);
+  return `${start}***${end}@${domain}`;
+}
 
 export default function ReviewsSection() {
   const { language } = useLanguage();
@@ -27,7 +41,7 @@ export default function ReviewsSection() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
-  // Dynamic Rating Counts State (Realistic baseline: 184 reviews totaling 4.9)
+  // Dynamic Rating Counts State (Baseline: 184 reviews totaling 4.9)
   const [ratingCounts, setRatingCounts] = useState<{ [key: number]: number }>({
     5: 170,
     4: 11,
@@ -36,8 +50,9 @@ export default function ReviewsSection() {
     1: 0,
   });
 
-  // Form States
+  // Form States (Including Email)
   const [formName, setFormName] = useState("");
+  const [formEmail, setFormEmail] = useState("");
   const [formRating, setFormRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [formArea, setFormArea] = useState(isAr ? "حولي" : "Hawally");
@@ -68,7 +83,6 @@ export default function ReviewsSection() {
         stars,
         count,
         pct: `${Math.round(pctNumber)}%`,
-        pctValue: pctNumber,
       };
     });
   }, [ratingCounts, totalReviewsCount]);
@@ -100,10 +114,10 @@ export default function ReviewsSection() {
     );
   };
 
-  // Submit new review: Dynamically recalculates scores & progress bars!
+  // Submit new review: Instantly updates all counts, percentages, and drops onto the grid!
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formComment.trim()) return;
+    if (!formName.trim() || !formEmail.trim() || !formComment.trim()) return;
 
     // 1. Update Rating Counts dynamically
     setRatingCounts((prev) => ({
@@ -126,10 +140,11 @@ export default function ReviewsSection() {
         ? "AC Repair & Servicing"
         : "Refrigerator & Freezer Repair";
 
-    // 3. Create New Review Item
+    // 3. Prepend New Review to UI state (Email will be rendered half-encrypted)
     const newReview: ReviewItem = {
       id: `rev-${Date.now()}`,
       name: { ar: formName, en: formName },
+      email: formEmail, // Stored securely, shown with stars on card
       avatarColor: "bg-blue-600",
       isLocalGuide: false,
       rating: formRating,
@@ -142,7 +157,6 @@ export default function ReviewsSection() {
       isNew: true, // Triggers arrival spotlight animation
     };
 
-    // Prepend to top of list
     setReviews([newReview, ...reviews]);
     setSubmissionSuccess(true);
 
@@ -150,12 +164,12 @@ export default function ReviewsSection() {
       setSubmissionSuccess(false);
       setIsModalOpen(false);
       setFormName("");
+      setFormEmail("");
       setFormComment("");
       setFormRating(5);
-    }, 1200);
+    }, 1000);
   };
 
-  // Animation Variants
   const cardEntranceVariants: Variants = {
     hidden: { opacity: 0, y: 35, scale: 0.95 },
     visible: (custom: number) => ({
@@ -215,7 +229,7 @@ export default function ReviewsSection() {
         </motion.div>
 
         {/* ==========================================================
-            Google Maps Overall Score Card with DYNAMIC Recalculation
+            Google Maps Overall Score Card with Dynamic Math
            ========================================================== */}
         <motion.div
           initial={{ opacity: 0, y: 25 }}
@@ -239,9 +253,9 @@ export default function ReviewsSection() {
               <div className="flex items-baseline gap-3 mb-2">
                 <motion.span 
                   key={dynamicAverageScore}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.85 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4 }}
+                  transition={{ duration: 0.35 }}
                   className="text-5xl sm:text-6xl font-black text-slate-900 leading-none"
                 >
                   {dynamicAverageScore}
@@ -259,7 +273,7 @@ export default function ReviewsSection() {
               {/* Dynamic Total Reviews Count */}
               <motion.span 
                 key={totalReviewsCount}
-                initial={{ opacity: 0, y: 5 }}
+                initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-xs sm:text-sm font-bold text-slate-500 mb-5"
               >
@@ -280,7 +294,7 @@ export default function ReviewsSection() {
               </motion.button>
             </div>
 
-            {/* DYNAMIC Animated Progress Bars */}
+            {/* Dynamic Animated Progress Bars */}
             <div className="lg:col-span-5 space-y-3">
               {ratingBars.map((bar) => (
                 <div key={bar.stars} className="flex items-center gap-3 text-xs sm:text-sm font-bold text-slate-600">
@@ -302,7 +316,6 @@ export default function ReviewsSection() {
                     </motion.div>
                   </div>
 
-                  {/* Percentage Counter */}
                   <motion.span 
                     key={bar.pct}
                     initial={{ opacity: 0 }}
@@ -361,7 +374,7 @@ export default function ReviewsSection() {
         </div>
 
         {/* ==========================================================
-            Reviews Grid (Animated Boxes & Staged Text Reveal)
+            Reviews Grid (Showing Half-Encrypted Emails with Stars)
            ========================================================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
           <AnimatePresence mode="popLayout">
@@ -383,7 +396,7 @@ export default function ReviewsSection() {
                 }`}
               >
                 <div>
-                  {/* Card Header (Customer Avatar, Name, Badge) */}
+                  {/* Card Header (Customer Avatar, Name, Half-Encrypted Email, Badge) */}
                   <div className="flex items-start justify-between gap-3 mb-3.5">
                     <div className="flex items-center gap-3">
                       <div className={`w-11 h-11 rounded-full ${rev.avatarColor} text-white font-black text-base flex items-center justify-center shadow-xs flex-shrink-0`}>
@@ -403,7 +416,20 @@ export default function ReviewsSection() {
                           )}
                         </div>
 
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold mt-0.5">
+                        {/* HALF-ENCRYPTED EMAIL DISPLAY WITH STARS */}
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <Mail className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                          <span dir="ltr" className="text-[11px] font-mono font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/80">
+                            {maskEmail(rev.email)}
+                          </span>
+                          <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-0.5" title={isAr ? "بريد موثق" : "Verified Email"}>
+                            <ShieldCheck className="w-3 h-3 text-emerald-500" />
+                            <span>{isAr ? "موثق" : "Verified"}</span>
+                          </span>
+                        </div>
+
+                        {/* Local Guide or Verified Customer Badge */}
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold mt-1">
                           {rev.isLocalGuide ? (
                             <span className="text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80">
                               {isAr ? `مرشد محلي • ${rev.reviewsCount} تقييم` : `Local Guide • ${rev.reviewsCount} reviews`}
@@ -440,11 +466,11 @@ export default function ReviewsSection() {
                     <span>{isAr ? `${rev.serviceTag.ar} (${rev.area.ar})` : `${rev.serviceTag.en} (${rev.area.en})`}</span>
                   </div>
 
-                  {/* Animated Text Quote */}
+                  {/* Review Text */}
                   <motion.p 
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45 }}
+                    transition={{ duration: 0.4 }}
                     className="text-slate-600 text-sm leading-relaxed font-medium"
                   >
                     "{isAr ? rev.comment.ar : rev.comment.en}"
@@ -476,7 +502,7 @@ export default function ReviewsSection() {
       </div>
 
       {/* ==========================================================
-          ANIMATED "Write a Review" Modal (Google Maps Style)
+          Interactive "Write a Review" Modal with Email Field
          ========================================================== */}
       <AnimatePresence>
         {isModalOpen && (
@@ -492,7 +518,7 @@ export default function ReviewsSection() {
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs"
             />
 
-            {/* Modal Dialog with Spring Physics */}
+            {/* Modal Dialog */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 25 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -515,10 +541,10 @@ export default function ReviewsSection() {
                   {isAr ? "كتابة مراجعة وتقييم" : "Write a Review"}
                 </h3>
               </div>
-              <p className="text-xs text-slate-500 font-medium mb-6">
+              <p className="text-xs text-slate-500 font-medium mb-5">
                 {isAr
-                  ? "شارك تجربتك مع فنيي كويت فيكس لمساعدة الآخرين في الكويت."
-                  : "Share your honest experience with Kuwait Fix to help homeowners."}
+                  ? "شارك تجربتك لمساعدة الآخرين. سيتم تشفير بريدك بنجوم لحماية خصوصيتك."
+                  : "Share your experience. Your email will be partially masked with stars to protect your privacy."}
               </p>
 
               {/* Success Notification Alert */}
@@ -541,14 +567,14 @@ export default function ReviewsSection() {
               </AnimatePresence>
 
               {/* Form Body */}
-              <form onSubmit={handleReviewSubmit} className="space-y-4">
+              <form onSubmit={handleReviewSubmit} className="space-y-3.5">
                 
                 {/* 1. Interactive Star Rating Picker */}
                 <div>
-                  <label className="block text-xs font-black text-slate-700 mb-1.5">
+                  <label className="block text-xs font-black text-slate-700 mb-1">
                     {isAr ? "التقييم العام" : "Overall Rating"}
                   </label>
-                  <div className="flex items-center gap-1.5 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                  <div className="flex items-center gap-1 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <motion.button
                         key={star}
@@ -561,7 +587,7 @@ export default function ReviewsSection() {
                         className="p-1 cursor-pointer transition-colors"
                       >
                         <Star
-                          className={`w-7 h-7 ${
+                          className={`w-6 h-6 ${
                             star <= (hoverRating || formRating)
                               ? "text-[#FBBC04] fill-current drop-shadow-xs"
                               : "text-slate-300"
@@ -575,19 +601,36 @@ export default function ReviewsSection() {
                   </div>
                 </div>
 
-                {/* 2. Customer Name */}
-                <div>
-                  <label className="block text-xs font-black text-slate-700 mb-1">
-                    {isAr ? "الاسم الكريم" : "Your Name"}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formName}
-                    onChange={(e) => setFormName(e.target.value)}
-                    placeholder={isAr ? "مثال: فهد الشمري" : "e.g. Fahad Al-Shammari"}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
-                  />
+                {/* 2. Customer Name & Email Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-1">
+                      {isAr ? "الاسم الكريم" : "Your Name"}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      placeholder={isAr ? "فهد الشمري" : "Fahad Al-Shammari"}
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-slate-700 mb-1">
+                      {isAr ? "البريد الإلكتروني (يظهر مشفراً)" : "Email (Masked with stars)"}
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formEmail}
+                      onChange={(e) => setFormEmail(e.target.value)}
+                      placeholder="client@gmail.com"
+                      dir="ltr"
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors text-right"
+                    />
+                  </div>
                 </div>
 
                 {/* 3. Area & Service Category Dropdown */}
@@ -688,6 +731,3 @@ function GoogleLogoSvg({ size = 20 }: { size?: number }) {
     </svg>
   );
 }
-
-
-

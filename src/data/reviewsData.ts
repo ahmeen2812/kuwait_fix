@@ -4,6 +4,7 @@ export interface ReviewItem {
     ar: string;
     en: string;
   };
+  email: string; // Stored email to be displayed half-encrypted with stars
   avatarColor: string;
   isLocalGuide: boolean;
   reviewsCount?: number;
@@ -36,6 +37,7 @@ export const initialReviewsData: ReviewItem[] = [
       ar: "فهد الشمري",
       en: "Fahad Al-Shammari",
     },
+    email: "fahad.shammari92@gmail.com",
     avatarColor: "bg-blue-600",
     isLocalGuide: true,
     reviewsCount: 38,
@@ -65,6 +67,7 @@ export const initialReviewsData: ReviewItem[] = [
       ar: "سارة الكندري",
       en: "Sara Al-Kandari",
     },
+    email: "sara.kandari.kw@gmail.com",
     avatarColor: "bg-purple-600",
     isLocalGuide: true,
     reviewsCount: 24,
@@ -94,6 +97,7 @@ export const initialReviewsData: ReviewItem[] = [
       ar: "م. ناصر المطيري",
       en: "Eng. Nasser Al-Mutairi",
     },
+    email: "eng.nasser.mutairi@gmail.com",
     avatarColor: "bg-emerald-600",
     isLocalGuide: false,
     rating: 5,
@@ -122,6 +126,7 @@ export const initialReviewsData: ReviewItem[] = [
       ar: "خالد الهاجري",
       en: "Khaled Al-Hajri",
     },
+    email: "khaled.hajri88@gmail.com",
     avatarColor: "bg-amber-600",
     isLocalGuide: true,
     reviewsCount: 52,
@@ -151,6 +156,7 @@ export const initialReviewsData: ReviewItem[] = [
       ar: "دلال العتيبي",
       en: "Dalal Al-Otaibi",
     },
+    email: "dalal.otaibi95@gmail.com",
     avatarColor: "bg-rose-600",
     isLocalGuide: false,
     rating: 5,
@@ -179,6 +185,7 @@ export const initialReviewsData: ReviewItem[] = [
       ar: "عبدالله البلوشي",
       en: "Abdullah Al-Baloushi",
     },
+    email: "a.baloushi.kw@gmail.com",
     avatarColor: "bg-teal-600",
     isLocalGuide: true,
     reviewsCount: 17,
@@ -203,4 +210,3 @@ export const initialReviewsData: ReviewItem[] = [
     helpfulCount: 9,
   },
 ];
-

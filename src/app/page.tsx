@@ -3,6 +3,7 @@ import Hero from "@/components/sections/Hero";
 import TrustFeatures from "@/components/sections/TrustFeatures";
 import ServicesSection from "@/components/sections/ServicesSection";
 import ReviewsSection from "@/components/sections/ReviewsSection";
+import ContactSection from "@/components/sections/ContactSection";
 
 export default function HomePage() {
   return (
@@ -10,7 +11,7 @@ export default function HomePage() {
       {/* 1. Navbar with Language Switcher */}
       <Navbar />
 
-      {/* 2. Hero Section */}
+      {/* 2. Hero Section with Line Reveal */}
       <Hero />
 
       {/* 3. Scroll-Triggered Standards Section */}
@@ -21,6 +22,10 @@ export default function HomePage() {
 
       {/* 5. Google Maps Reviews Section */}
       <ReviewsSection />
+
+      {/* 6. Client Info Showcase & Booking Form */}
+      <ContactSection />
     </div>
   );
 }
+
