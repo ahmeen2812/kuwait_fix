@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useId } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { 
   Star, 
@@ -10,7 +10,8 @@ import {
   PenLine, 
   X, 
   Sparkles,
-  ExternalLink
+  Send,
+  Sparkle
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { initialReviewsData, ReviewItem } from "@/data/reviewsData";
@@ -19,39 +20,79 @@ export default function ReviewsSection() {
   const { language } = useLanguage();
   const isAr = language === "ar";
 
+  // Reviews List State
   const [reviews, setReviews] = useState<ReviewItem[]>(initialReviewsData);
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [likedReviews, setLikedReviews] = useState<Record<string, boolean>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
-  // New review form states
+  // Dynamic Rating Counts State (Realistic baseline: 184 reviews totaling 4.9)
+  const [ratingCounts, setRatingCounts] = useState<{ [key: number]: number }>({
+    5: 170,
+    4: 11,
+    3: 3,
+    2: 0,
+    1: 0,
+  });
+
+  // Form States
   const [formName, setFormName] = useState("");
   const [formRating, setFormRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [formArea, setFormArea] = useState(isAr ? "حولي" : "Hawally");
-  const [formCategory, setFormCategory] = useState<"washing-machine" | "ac" | "fridge">("washing-machine");
+  const [formCategory, setFormCategory] = useState<"washing-machine" | "ac" | "fridge">("ac");
   const [formComment, setFormComment] = useState("");
 
-  // Filter reviews
-  const filteredReviews = reviews.filter((r) => {
-    if (selectedFilter === "all") return true;
-    return r.serviceCategory === selectedFilter;
-  });
+  // ==========================================================
+  // DYNAMIC CALCULATIONS: Total, Percentages & Overall Average
+  // ==========================================================
+  const totalReviewsCount = useMemo(() => {
+    return Object.values(ratingCounts).reduce((a, b) => a + b, 0);
+  }, [ratingCounts]);
 
-  // Handle like button
+  const dynamicAverageScore = useMemo(() => {
+    const totalScore = Object.entries(ratingCounts).reduce(
+      (sum, [star, count]) => sum + Number(star) * count,
+      0
+    );
+    const avg = totalScore / (totalReviewsCount || 1);
+    return avg.toFixed(1);
+  }, [ratingCounts, totalReviewsCount]);
+
+  const ratingBars = useMemo(() => {
+    return [5, 4, 3, 2, 1].map((stars) => {
+      const count = ratingCounts[stars] || 0;
+      const pctNumber = totalReviewsCount > 0 ? (count / totalReviewsCount) * 100 : 0;
+      return {
+        stars,
+        count,
+        pct: `${Math.round(pctNumber)}%`,
+        pctValue: pctNumber,
+      };
+    });
+  }, [ratingCounts, totalReviewsCount]);
+
+  // Filter reviews
+  const filteredReviews = useMemo(() => {
+    if (selectedFilter === "all") return reviews;
+    return reviews.filter((r) => r.serviceCategory === selectedFilter);
+  }, [reviews, selectedFilter]);
+
+  // Handle helpful thumbs-up click with micro-vibration
   const handleLike = (id: string) => {
+    const isCurrentlyLiked = likedReviews[id];
     setLikedReviews((prev) => ({
       ...prev,
-      [id]: !prev[id],
+      [id]: !isCurrentlyLiked,
     }));
 
     setReviews((prev) =>
       prev.map((r) => {
         if (r.id === id) {
-          const isLiked = likedReviews[id];
           return {
             ...r,
-            helpfulCount: isLiked ? r.helpfulCount - 1 : r.helpfulCount + 1,
+            helpfulCount: isCurrentlyLiked ? r.helpfulCount - 1 : r.helpfulCount + 1,
           };
         }
         return r;
@@ -59,12 +100,34 @@ export default function ReviewsSection() {
     );
   };
 
-  // Submit new review (Google Maps simulator)
+  // Submit new review: Dynamically recalculates scores & progress bars!
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formComment.trim()) return;
 
-    const newRev: ReviewItem = {
+    // 1. Update Rating Counts dynamically
+    setRatingCounts((prev) => ({
+      ...prev,
+      [formRating]: (prev[formRating] || 0) + 1,
+    }));
+
+    // 2. Determine Service Tag based on category
+    const serviceTagAr =
+      formCategory === "washing-machine"
+        ? "تصليح غسالة أوتوماتيك"
+        : formCategory === "ac"
+        ? "تصليح وصيانة مكيف"
+        : "تصليح ثلاجة وفريزر";
+
+    const serviceTagEn =
+      formCategory === "washing-machine"
+        ? "Washer Machine Repair"
+        : formCategory === "ac"
+        ? "AC Repair & Servicing"
+        : "Refrigerator & Freezer Repair";
+
+    // 3. Create New Review Item
+    const newReview: ReviewItem = {
       id: `rev-${Date.now()}`,
       name: { ar: formName, en: formName },
       avatarColor: "bg-blue-600",
@@ -73,34 +136,44 @@ export default function ReviewsSection() {
       date: { ar: "الآن", en: "Just now" },
       area: { ar: formArea, en: formArea },
       serviceCategory: formCategory,
-      serviceTag: {
-        ar: formCategory === "washing-machine" ? "تصليح غسالات" : formCategory === "ac" ? "تصليح مكيفات" : "تصليح ثلاجات",
-        en: formCategory === "washing-machine" ? "Washer Repair" : formCategory === "ac" ? "AC Repair" : "Fridge Repair",
-      },
+      serviceTag: { ar: serviceTagAr, en: serviceTagEn },
       comment: { ar: formComment, en: formComment },
       helpfulCount: 0,
+      isNew: true, // Triggers arrival spotlight animation
     };
 
-    setReviews([newRev, ...reviews]);
-    setIsModalOpen(false);
-    setFormName("");
-    setFormComment("");
-    setFormRating(5);
+    // Prepend to top of list
+    setReviews([newReview, ...reviews]);
+    setSubmissionSuccess(true);
+
+    setTimeout(() => {
+      setSubmissionSuccess(false);
+      setIsModalOpen(false);
+      setFormName("");
+      setFormComment("");
+      setFormRating(5);
+    }, 1200);
   };
 
-  // Ratings breakdown percentages
-  const ratingBars = [
-    { stars: 5, pct: "92%" },
-    { stars: 4, pct: "6%" },
-    { stars: 3, pct: "2%" },
-    { stars: 2, pct: "0%" },
-    { stars: 1, pct: "0%" },
-  ];
+  // Animation Variants
+  const cardEntranceVariants: Variants = {
+    hidden: { opacity: 0, y: 35, scale: 0.95 },
+    visible: (custom: number) => ({
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.55,
+        ease: [0.16, 1, 0.3, 1],
+        delay: (custom % 3) * 0.08,
+      },
+    }),
+  };
 
   return (
     <section id="reviews" className="py-16 sm:py-20 lg:py-28 bg-[#FAFCFF] border-b border-slate-200/80 relative overflow-hidden overflow-x-clip">
       
-      {/* Ambient Background Grid */}
+      {/* Background Dots */}
       <div 
         className="absolute inset-0 opacity-[0.025] pointer-events-none"
         style={{
@@ -108,6 +181,8 @@ export default function ReviewsSection() {
           backgroundSize: "28px 28px"
         }}
       />
+      <div className="absolute top-1/4 -right-36 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 -left-36 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
@@ -140,7 +215,7 @@ export default function ReviewsSection() {
         </motion.div>
 
         {/* ==========================================================
-            Google Maps Overall Score & Breakdown Card
+            Google Maps Overall Score Card with DYNAMIC Recalculation
            ========================================================== */}
         <motion.div
           initial={{ opacity: 0, y: 25 }}
@@ -151,75 +226,96 @@ export default function ReviewsSection() {
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
-            {/* Left Col (Score & Stars) */}
+            {/* Score & Counter */}
             <div className="lg:col-span-4 flex flex-col items-center lg:items-start text-center lg:text-right border-b lg:border-b-0 lg:border-l border-slate-100 pb-6 lg:pb-0 lg:pl-8">
-              
-              {/* Google Brand Logo Header */}
               <div className="flex items-center gap-2 mb-3">
-                <GoogleLogoSvg />
+                <GoogleLogoSvg size={24} />
                 <span className="text-sm font-black text-slate-700 tracking-tight">
                   Google Reviews
                 </span>
               </div>
 
+              {/* Dynamic Average Rating */}
               <div className="flex items-baseline gap-3 mb-2">
-                <span className="text-5xl sm:text-6xl font-black text-slate-900 leading-none">
-                  4.9
-                </span>
+                <motion.span 
+                  key={dynamicAverageScore}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4 }}
+                  className="text-5xl sm:text-6xl font-black text-slate-900 leading-none"
+                >
+                  {dynamicAverageScore}
+                </motion.span>
                 <span className="text-lg font-bold text-slate-400">/ 5.0</span>
               </div>
 
-              {/* 5 Big Gold Stars */}
+              {/* 5 Gold Stars */}
               <div className="flex items-center gap-1 text-[#FBBC04] mb-2.5">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-5 h-5 fill-current" />
                 ))}
               </div>
 
-              <span className="text-xs sm:text-sm font-bold text-slate-500 mb-5">
-                {isAr ? "بناءً على 184 تقييم حقيقي وموثق" : "Based on 184 verified reviews"}
-              </span>
+              {/* Dynamic Total Reviews Count */}
+              <motion.span 
+                key={totalReviewsCount}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs sm:text-sm font-bold text-slate-500 mb-5"
+              >
+                {isAr
+                  ? `بناءً على ${totalReviewsCount} تقييم حقيقي وموثق`
+                  : `Based on ${totalReviewsCount} verified reviews`}
+              </motion.span>
 
               {/* Write a Review Button */}
               <motion.button
                 onClick={() => setIsModalOpen(true)}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all cursor-pointer group"
               >
-                <PenLine className="w-4 h-4" />
+                <PenLine className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                 <span>{isAr ? "اكتب مراجعة وتقييم" : "Write a review"}</span>
               </motion.button>
             </div>
 
-            {/* Middle Col (Progress Bars) */}
-            <div className="lg:col-span-5 space-y-2.5">
+            {/* DYNAMIC Animated Progress Bars */}
+            <div className="lg:col-span-5 space-y-3">
               {ratingBars.map((bar) => (
                 <div key={bar.stars} className="flex items-center gap-3 text-xs sm:text-sm font-bold text-slate-600">
                   <span className="w-4 flex items-center justify-center">{bar.stars}</span>
                   <Star className="w-3.5 h-3.5 text-[#FBBC04] fill-current flex-shrink-0" />
                   
-                  {/* Progress Bar Container */}
-                  <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden relative">
+                  {/* Outer Bar Track */}
+                  <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden relative">
                     <motion.div
-                      initial={{ scaleX: 0 }}
-                      whileInView={{ scaleX: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                      initial={{ width: 0 }}
+                      animate={{ width: bar.pct }}
+                      transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
                       style={{ 
-                        width: bar.pct,
                         transformOrigin: isAr ? "right" : "left"
                       }}
-                      className="h-full bg-[#FBBC04] rounded-full"
-                    />
+                      className="h-full bg-[#FBBC04] rounded-full relative"
+                    >
+                      <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                    </motion.div>
                   </div>
 
-                  <span className="w-9 text-slate-400 text-right">{bar.pct}</span>
+                  {/* Percentage Counter */}
+                  <motion.span 
+                    key={bar.pct}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="w-10 text-slate-500 font-mono text-xs text-right"
+                  >
+                    {bar.pct}
+                  </motion.span>
                 </div>
               ))}
             </div>
 
-            {/* Right Col (Google Guarantee Badge) */}
+            {/* Trust Seal */}
             <div className="lg:col-span-3 bg-slate-50 border border-slate-200/80 rounded-2xl p-5 text-center flex flex-col items-center justify-center">
               <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-3">
                 <CheckCircle2 className="w-6 h-6" />
@@ -238,11 +334,11 @@ export default function ReviewsSection() {
         </motion.div>
 
         {/* ==========================================================
-            Filter Chips
+            Category Filter Chips
            ========================================================== */}
         <div className="flex flex-wrap items-center justify-center gap-2.5 mb-10">
           {[
-            { id: "all", label: isAr ? "جميع التقييمات (184)" : "All Reviews (184)" },
+            { id: "all", label: isAr ? `جميع التقييمات (${totalReviewsCount})` : `All Reviews (${totalReviewsCount})` },
             { id: "ac", label: isAr ? "تصليح المكيفات" : "AC Repair" },
             { id: "washing-machine", label: isAr ? "تصليح الغسالات" : "Washing Machine" },
             { id: "fridge", label: isAr ? "تصليح الثلاجات" : "Refrigerator" },
@@ -265,7 +361,7 @@ export default function ReviewsSection() {
         </div>
 
         {/* ==========================================================
-            Reviews Grid (Google Maps Style Cards)
+            Reviews Grid (Animated Boxes & Staged Text Reveal)
            ========================================================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
           <AnimatePresence mode="popLayout">
@@ -273,25 +369,40 @@ export default function ReviewsSection() {
               <motion.div
                 key={rev.id}
                 layout
-                initial={{ opacity: 0, y: 25, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.45, delay: (index % 3) * 0.06 }}
-                className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-md p-6 flex flex-col justify-between transition-shadow duration-300 gpu-layer"
+                custom={index}
+                variants={cardEntranceVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-30px" }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                whileHover={{ y: -6, transition: { duration: 0.25 } }}
+                className={`rounded-2xl border p-6 flex flex-col justify-between transition-all duration-300 gpu-layer ${
+                  rev.isNew
+                    ? "bg-blue-50/70 border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.15)] ring-2 ring-blue-500/20"
+                    : "bg-white border-slate-200/90 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.05)] hover:shadow-md"
+                }`}
               >
                 <div>
-                  {/* Top Customer Info */}
+                  {/* Card Header (Customer Avatar, Name, Badge) */}
                   <div className="flex items-start justify-between gap-3 mb-3.5">
                     <div className="flex items-center gap-3">
-                      {/* Avatar Circle with Initial */}
                       <div className={`w-11 h-11 rounded-full ${rev.avatarColor} text-white font-black text-base flex items-center justify-center shadow-xs flex-shrink-0`}>
                         {isAr ? rev.name.ar.charAt(0) : rev.name.en.charAt(0)}
                       </div>
 
                       <div>
-                        <h4 className="text-sm font-black text-slate-900 leading-snug">
-                          {isAr ? rev.name.ar : rev.name.en}
-                        </h4>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="text-sm font-black text-slate-900 leading-snug">
+                            {isAr ? rev.name.ar : rev.name.en}
+                          </h4>
+                          {rev.isNew && (
+                            <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Sparkle className="w-2.5 h-2.5 fill-current" />
+                              <span>{isAr ? "جديد" : "New"}</span>
+                            </span>
+                          )}
+                        </div>
+
                         <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold mt-0.5">
                           {rev.isLocalGuide ? (
                             <span className="text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80">
@@ -306,13 +417,12 @@ export default function ReviewsSection() {
                       </div>
                     </div>
 
-                    {/* Google Small Icon */}
-                    <div className="opacity-70">
+                    <div className="opacity-75">
                       <GoogleLogoSvg size={18} />
                     </div>
                   </div>
 
-                  {/* Star Rating & Date */}
+                  {/* Star Rating & Timestamp */}
                   <div className="flex items-center gap-2 mb-2.5">
                     <div className="flex items-center gap-0.5 text-[#FBBC04]">
                       {[...Array(rev.rating)].map((_, i) => (
@@ -330,13 +440,18 @@ export default function ReviewsSection() {
                     <span>{isAr ? `${rev.serviceTag.ar} (${rev.area.ar})` : `${rev.serviceTag.en} (${rev.area.en})`}</span>
                   </div>
 
-                  {/* Customer Review Text */}
-                  <p className="text-slate-600 text-sm leading-relaxed font-medium">
+                  {/* Animated Text Quote */}
+                  <motion.p 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45 }}
+                    className="text-slate-600 text-sm leading-relaxed font-medium"
+                  >
                     "{isAr ? rev.comment.ar : rev.comment.en}"
-                  </p>
+                  </motion.p>
                 </div>
 
-                {/* Helpful / Thumbs Up Button Footer */}
+                {/* Helpful Like Button */}
                 <div className="pt-4 mt-5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-bold">
                   <span>{isAr ? "هل كان هذا التقييم مفيداً؟" : "Was this review helpful?"}</span>
 
@@ -361,28 +476,29 @@ export default function ReviewsSection() {
       </div>
 
       {/* ==========================================================
-          Interactive "Write a Review" Modal (Google Maps Style)
+          ANIMATED "Write a Review" Modal (Google Maps Style)
          ========================================================== */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             
-            {/* Backdrop */}
+            {/* Backdrop Blur */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
               onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs"
             />
 
-            {/* Modal Dialog */}
+            {/* Modal Dialog with Spring Physics */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              initial={{ opacity: 0, scale: 0.9, y: 25 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 sm:p-8 z-10 text-right overflow-hidden"
+              exit={{ opacity: 0, scale: 0.9, y: 25 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 sm:p-8 z-10 text-right overflow-hidden border border-slate-100"
             >
               {/* Close Button */}
               <button
@@ -392,8 +508,9 @@ export default function ReviewsSection() {
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-2 mb-4">
-                <GoogleLogoSvg size={22} />
+              {/* Modal Header */}
+              <div className="flex items-center gap-2 mb-2">
+                <GoogleLogoSvg size={24} />
                 <h3 className="text-xl font-black text-slate-900">
                   {isAr ? "كتابة مراجعة وتقييم" : "Write a Review"}
                 </h3>
@@ -404,39 +521,61 @@ export default function ReviewsSection() {
                   : "Share your honest experience with Kuwait Fix to help homeowners."}
               </p>
 
+              {/* Success Notification Alert */}
+              <AnimatePresence>
+                {submissionSuccess && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0, y: -10 }}
+                    animate={{ opacity: 1, height: "auto", y: 0 }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2 text-center justify-center"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span>
+                      {isAr
+                        ? "تم نشر تقييمك بنجاح وتحديث إحصائيات Google!"
+                        : "Your review was published and Google ratings updated!"}
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Form Body */}
               <form onSubmit={handleReviewSubmit} className="space-y-4">
                 
-                {/* Interactive Star Picker */}
+                {/* 1. Interactive Star Rating Picker */}
                 <div>
                   <label className="block text-xs font-black text-slate-700 mb-1.5">
                     {isAr ? "التقييم العام" : "Overall Rating"}
                   </label>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 bg-slate-50 p-3 rounded-xl border border-slate-200/80">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <button
+                      <motion.button
                         key={star}
                         type="button"
+                        whileHover={{ scale: 1.25 }}
+                        whileTap={{ scale: 0.9 }}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
                         onClick={() => setFormRating(star)}
-                        className="p-1 cursor-pointer transition-transform hover:scale-120"
+                        className="p-1 cursor-pointer transition-colors"
                       >
                         <Star
                           className={`w-7 h-7 ${
                             star <= (hoverRating || formRating)
-                              ? "text-[#FBBC04] fill-current"
-                              : "text-slate-200"
+                              ? "text-[#FBBC04] fill-current drop-shadow-xs"
+                              : "text-slate-300"
                           }`}
                         />
-                      </button>
+                      </motion.button>
                     ))}
-                    <span className="text-xs font-bold text-slate-500 mr-2">
+                    <span className="text-xs font-black text-slate-600 mr-2">
                       ({formRating} / 5)
                     </span>
                   </div>
                 </div>
 
-                {/* Name */}
+                {/* 2. Customer Name */}
                 <div>
                   <label className="block text-xs font-black text-slate-700 mb-1">
                     {isAr ? "الاسم الكريم" : "Your Name"}
@@ -447,11 +586,11 @@ export default function ReviewsSection() {
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder={isAr ? "مثال: فهد الشمري" : "e.g. Fahad Al-Shammari"}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
                   />
                 </div>
 
-                {/* Area and Category Grid */}
+                {/* 3. Area & Service Category Dropdown */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-black text-slate-700 mb-1">
@@ -463,7 +602,7 @@ export default function ReviewsSection() {
                       value={formArea}
                       onChange={(e) => setFormArea(e.target.value)}
                       placeholder={isAr ? "حولي، السالمية..." : "Hawally, Salmiya..."}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
                     />
                   </div>
 
@@ -474,16 +613,16 @@ export default function ReviewsSection() {
                     <select
                       value={formCategory}
                       onChange={(e) => setFormCategory(e.target.value as any)}
-                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors cursor-pointer"
                     >
-                      <option value="washing-machine">{isAr ? "تصليح غسالة" : "Washing Machine"}</option>
                       <option value="ac">{isAr ? "تصليح مكيف" : "AC Repair"}</option>
+                      <option value="washing-machine">{isAr ? "تصليح غسالة" : "Washing Machine"}</option>
                       <option value="fridge">{isAr ? "تصليح ثلاجة" : "Refrigerator"}</option>
                     </select>
                   </div>
                 </div>
 
-                {/* Review Description */}
+                {/* 4. Review Comment Textarea */}
                 <div>
                   <label className="block text-xs font-black text-slate-700 mb-1">
                     {isAr ? "رأيك في جودة الصيانة وسرعة الفني" : "Your Review"}
@@ -498,18 +637,21 @@ export default function ReviewsSection() {
                         ? "اكتب تفاصيل تجربتك، سرعة وصول الفني، والكفالة المقدمة..."
                         : "Describe the technician's arrival time, parts quality, and warranty..."
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white resize-none"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors resize-none"
                   />
                 </div>
 
                 {/* Submit Action */}
                 <div className="pt-2">
-                  <button
+                  <motion.button
                     type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm py-3 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm py-3 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
-                    {isAr ? "نشر التقييم فورياً" : "Post Review Now"}
-                  </button>
+                    <span>{isAr ? "نشر التقييم فورياً" : "Post Review Now"}</span>
+                    <Send className="w-4 h-4" />
+                  </motion.button>
                 </div>
 
               </form>
@@ -523,7 +665,7 @@ export default function ReviewsSection() {
   );
 }
 
-// Small Google Multi-Colored Logo SVG Icon
+// Google Multi-Colored Official SVG Logo
 function GoogleLogoSvg({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24">
@@ -546,3 +688,6 @@ function GoogleLogoSvg({ size = 20 }: { size?: number }) {
     </svg>
   );
 }
+
+
+
