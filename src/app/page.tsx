@@ -4,14 +4,15 @@ import TrustFeatures from "@/components/sections/TrustFeatures";
 import ServicesSection from "@/components/sections/ServicesSection";
 import ReviewsSection from "@/components/sections/ReviewsSection";
 import ContactSection from "@/components/sections/ContactSection";
+import Footer from "@/components/layout/Footer";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#FAFCFF] overflow-x-hidden">
+    <div className="min-h-screen bg-[#FAFCFF] overflow-x-hidden flex flex-col justify-between">
       {/* 1. Navbar with Language Switcher */}
       <Navbar />
 
-      {/* 2. Hero Section with Line Reveal */}
+      {/* 2. Hero Section */}
       <Hero />
 
       {/* 3. Scroll-Triggered Standards Section */}
@@ -25,8 +26,9 @@ export default function HomePage() {
 
       {/* 6. Client Info Showcase & Booking Form */}
       <ContactSection />
+
+      {/* 7. Complete Animated Footer */}
+      <Footer />
     </div>
   );
 }
-
-

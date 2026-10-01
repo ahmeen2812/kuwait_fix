@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
+import FloatingActions from "@/components/ui/FloatingActions";
 
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
@@ -24,8 +25,14 @@ export default function RootLayout({
       <body className={`${cairo.className} bg-[#FAFCFF] text-slate-900 antialiased`}>
         <LanguageProvider>
           <main>{children}</main>
+
+          {/* High-End Floating WhatsApp & Call Us Widget */}
+          <FloatingActions />
         </LanguageProvider>
       </body>
     </html>
   );
 }
+
+
+

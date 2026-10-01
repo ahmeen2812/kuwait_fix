@@ -1,7 +1,7 @@
 /* Arabic:
 بيانات الموقع وتفاصيل التواصل المعتمدة لشركة كويت فيكس
 English Translation:
-Verified site settings, client details, and navigation config
+Verified site settings, client details, navigation config, and Formspree ID
 */
 
 export const siteConfig = {
@@ -9,6 +9,10 @@ export const siteConfig = {
   brandNameEn: "Kuwait Fix",
   tagline: "خبراء صيانة الأجهزة المنزلية والتكييف في الكويت",
   experienceYears: "20+",
+
+  // Formspree Integration Endpoint
+  // Replace YOUR_FORMSPREE_ID with your Formspree Form ID from formspree.io
+  formspreeEndpoint: "https://formspree.io/f/YOUR_FORMSPREE_ID",
 
   // Unified CTA text for Google Ads conversion tracking
   unifiedCtaText: "اتصل بنا",
@@ -29,12 +33,5 @@ export const siteConfig = {
     { title: "تصليح الغسالات", href: "/washing-machine-repair" },
     { title: "تصليح المكيفات", href: "/ac-repair" },
     { title: "تصليح الثلاجات", href: "/refrigerator-repair" },
-  ],
-
-  // Core Trust Badges
-  trustMetrics: [
-    { title: "وصول سريع", desc: "خلال 45 دقيقة لجميع المناطق" },
-    { title: "كفالة معتمدة", desc: "ضمان شامل على قطع الغيار" },
-    { title: "خبرة 20 عاماً", desc: "فنيون معتمدون داخل الكويت" },
   ],
 };

@@ -13,14 +13,13 @@ import {
   MessageCircle, 
   Sparkles,
   Loader2,
-  Calendar,
   AlertCircle
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function ContactSection() {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const isAr = language === "ar";
 
   // Kuwait Areas List (Bilingual)
@@ -64,47 +63,76 @@ export default function ContactSection() {
     area: isAr ? "السالمية" : "Salmiya",
     urgency: isAr ? "طوارئ فوري (خلال 45 دقيقة)" : "Urgent (Within 45 Mins)",
     notes: "",
+    _gotcha: "", // Honeypot anti-spam field
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // Handle Form Submit (Calls API & prepares mailto fallback)
+  // Formspree AJAX Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.phone.trim() || !formData.email.trim()) return;
 
+    // Check honeypot
+    if (formData._gotcha) return;
+
     setIsSubmitting(true);
+    setErrorMessage("");
 
     try {
-      const response = await fetch("/api/contact", {
+      const response = await fetch(siteConfig.formspreeEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          _replyto: formData.email,
+          service: formData.service,
+          area: formData.area,
+          urgency: formData.urgency,
+          notes: formData.notes,
+          _subject: `🚨 [حجز صيانة جديد] من ${formData.name} - ${formData.service} (${formData.area})`,
+        }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to send");
+      if (response.ok) {
+        setIsSuccess(true);
+        setFormData({
+          name: "",
+          phone: "",
+          email: "",
+          service: isAr ? "تصليح غسالة أوتوماتيك" : "Automatic Washing Machine",
+          area: isAr ? "السالمية" : "Salmiya",
+          urgency: isAr ? "طوارئ فوري (خلال 45 دقيقة)" : "Urgent (Within 45 Mins)",
+          notes: "",
+          _gotcha: "",
+        });
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData?.error || "Submission failed");
       }
-    } catch (err) {
-      console.warn("Direct API call error, falling back to instant client mail link:", err);
-      // Fallback: Opens user's default email client addressed to client email
-      const mailtoUrl = `mailto:${siteConfig.email}?subject=${encodeURIComponent(
-        `طلب صيانة من ${formData.name} - ${formData.service}`
-      )}&body=${encodeURIComponent(
-        `الاسم: ${formData.name}\nالهاتف: ${formData.phone}\nالبريد: ${formData.email}\nالخدمة: ${formData.service}\nالمنطقة: ${formData.area}\nالموعد: ${formData.urgency}\nالملاحظات: ${formData.notes}`
-      )}`;
-      window.open(mailtoUrl, "_blank");
+    } catch (err: any) {
+      console.error("Formspree submit error:", err);
+      setErrorMessage(
+        isAr
+          ? "تعذر إرسال النموذج عبر Formspree حالياً. يرجى التواصل مباشرة عبر الهاتف أو الواتساب."
+          : "Could not send form via Formspree right now. Please call or WhatsApp us directly."
+      );
     } finally {
       setIsSubmitting(false);
-      setIsSuccess(true);
     }
   };
 
   return (
     <section id="contact" className="py-16 sm:py-20 lg:py-28 bg-[#FAFCFF] border-b border-slate-200/80 relative overflow-hidden overflow-x-clip">
       
-      {/* Background Decorative Pattern */}
+      {/* Background Decorative Dots Pattern */}
       <div 
         className="absolute inset-0 opacity-[0.025] pointer-events-none"
         style={{
@@ -162,7 +190,7 @@ export default function ContactSection() {
         </motion.div>
 
         {/* ==========================================================
-            Main Grid: Client Info Card (Col 1) + Interactive Form (Col 2)
+            Main Grid: Client Info Card (Col 1) + Formspree Form (Col 2)
            ========================================================== */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           
@@ -182,7 +210,7 @@ export default function ContactSection() {
                 {isAr ? "معلومات التواصل المباشرة" : "Direct Contact Details"}
               </h3>
 
-              {/* Channel 1: Phone */}
+              {/* Phone Channel */}
               <a
                 href={`tel:${siteConfig.phoneRaw}`}
                 className="flex items-center gap-4 p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 hover:bg-blue-100/70 transition-colors group"
@@ -200,7 +228,7 @@ export default function ContactSection() {
                 </div>
               </a>
 
-              {/* Channel 2: Email */}
+              {/* Email Channel */}
               <a
                 href={`mailto:${siteConfig.email}`}
                 className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100 transition-colors group"
@@ -218,7 +246,7 @@ export default function ContactSection() {
                 </div>
               </a>
 
-              {/* Channel 3: WhatsApp */}
+              {/* WhatsApp Channel */}
               <a
                 href={siteConfig.whatsappUrl}
                 target="_blank"
@@ -238,7 +266,7 @@ export default function ContactSection() {
                 </div>
               </a>
 
-              {/* Service Badges */}
+              {/* Speed & Warranty Badges */}
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <div className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-200/70 rounded-xl">
                   <Clock className="w-4 h-4 text-blue-600 flex-shrink-0" />
@@ -269,7 +297,7 @@ export default function ContactSection() {
                   : "Fully equipped mobile workshops deployed daily across all governorates:"}
               </p>
 
-              {/* Interactive Kuwait Area Pills */}
+              {/* Interactive Kuwait Area Selection Pills */}
               <div className="flex flex-wrap gap-2">
                 {kuwaitAreas.map((loc) => (
                   <button
@@ -291,7 +319,7 @@ export default function ContactSection() {
           </motion.div>
 
           {/* ==========================================================
-              Column 2: Interactive Contact & Booking Form
+              Column 2: Formspree Interactive Booking Form
              ========================================================== */}
           <motion.div
             initial={{ opacity: 0, x: isAr ? -40 : 40 }}
@@ -316,6 +344,14 @@ export default function ContactSection() {
               </div>
             </div>
 
+            {/* Error Notification Alert */}
+            {errorMessage && (
+              <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
             {/* Success Notification Animation */}
             <AnimatePresence>
               {isSuccess ? (
@@ -329,12 +365,12 @@ export default function ContactSection() {
                     <CheckCircle2 className="w-10 h-10" />
                   </div>
                   <h4 className="text-2xl font-black text-slate-900">
-                    {isAr ? "تم إرسال طلبك بنجاح!" : "Booking Request Sent Successfully!"}
+                    {isAr ? "تم إرسال طلبك بنجاح عبر Formspree!" : "Booking Request Sent Successfully!"}
                   </h4>
                   <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
                     {isAr
-                      ? `شكراً لك ${formData.name}. تم إرسال تفاصيل الحجز إلى بريد الإدارة (acmaintenance96@gmail.com). سيتصل بك الفني خلال 10 دقائق.`
-                      : `Thank you ${formData.name}. Your request has been emailed to management (acmaintenance96@gmail.com). We will call you within 10 minutes.`}
+                      ? `شكراً لك. تم إرسال تفاصيل الحجز إلى إدارة كويت فيكس (${siteConfig.email}). سيتصل بك الفني خلال 10 دقائق.`
+                      : `Thank you. Your request was dispatched to Kuwait Fix (${siteConfig.email}). We will call you within 10 minutes.`}
                   </p>
                   <div className="pt-4">
                     <button
@@ -349,6 +385,17 @@ export default function ContactSection() {
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
                   
+                  {/* Honeypot field (hidden from humans, catches bots) */}
+                  <input
+                    type="text"
+                    name="_gotcha"
+                    value={formData._gotcha}
+                    onChange={(e) => setFormData({ ...formData, _gotcha: e.target.value })}
+                    className="hidden"
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+
                   {/* Row 1: Name & Phone */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -357,6 +404,7 @@ export default function ContactSection() {
                       </label>
                       <input
                         type="text"
+                        name="name"
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -371,6 +419,7 @@ export default function ContactSection() {
                       </label>
                       <input
                         type="tel"
+                        name="phone"
                         required
                         dir="ltr"
                         value={formData.phone}
@@ -384,10 +433,11 @@ export default function ContactSection() {
                   {/* Row 2: Customer Email */}
                   <div>
                     <label className="block text-xs font-black text-slate-700 mb-1.5">
-                      {isAr ? "بريدك الإلكتروني (لإرسال تفاصيل الحجز) *" : "Your Email Address *"}
+                      {isAr ? "بريدك الإلكتروني (لتأكيد الحجز) *" : "Your Email Address *"}
                     </label>
                     <input
                       type="email"
+                      name="email"
                       required
                       dir="ltr"
                       value={formData.email}
@@ -401,9 +451,10 @@ export default function ContactSection() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-black text-slate-700 mb-1.5">
-                        {isAr ? "الجهاز المطلوب صيانته *" : "Appliance Type *"}
+                        {isAr ? "الجهاز المطلوب صيانة *" : "Appliance Type *"}
                       </label>
                       <select
+                        name="service"
                         value={formData.service}
                         onChange={(e) => setFormData({ ...formData, service: e.target.value })}
                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 transition-all cursor-pointer"
@@ -421,6 +472,7 @@ export default function ContactSection() {
                         {isAr ? "المنطقة داخل الكويت *" : "Area in Kuwait *"}
                       </label>
                       <select
+                        name="area"
                         value={formData.area}
                         onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 transition-all cursor-pointer"
@@ -467,6 +519,7 @@ export default function ContactSection() {
                       {isAr ? "وصف العطل أو أي ملاحظات إضافية" : "Fault Description / Notes"}
                     </label>
                     <textarea
+                      name="notes"
                       rows={3}
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -491,7 +544,7 @@ export default function ContactSection() {
                       {isSubmitting ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>{isAr ? "جاري إرسال الحجز للإدارة..." : "Sending Booking Request..."}</span>
+                          <span>{isAr ? "جاري إرسال الحجز..." : "Submitting to Formspree..."}</span>
                         </>
                       ) : (
                         <>

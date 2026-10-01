@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +11,62 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const { language, toggleLanguage, t } = useLanguage();
+
+  const inactivityTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isHoveredRef = useRef(false);
+
+  // -------------------------------------------------------------
+  // INACTIVITY AUTO-HIDE LOGIC (4.5 Seconds Timer)
+  // -------------------------------------------------------------
+  const resetInactivityTimer = useCallback(() => {
+    // Always bring the navbar back into view upon interaction
+    setIsVisible(true);
+
+    if (inactivityTimeoutRef.current) {
+      clearTimeout(inactivityTimeoutRef.current);
+    }
+
+    // Do not hide if the user is hovering over the navbar or mobile menu is open
+    if (mobileMenuOpen || isHoveredRef.current) {
+      return;
+    }
+
+    // Start 4.5 seconds countdown
+    inactivityTimeoutRef.current = setTimeout(() => {
+      setIsVisible(false);
+    }, 4500);
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    // Start initial timer
+    resetInactivityTimer();
+
+    const handleUserActivity = () => {
+      resetInactivityTimer();
+    };
+
+    // Listen for any activity: scroll, touch, mouse movement, click, or key press
+    window.addEventListener("scroll", handleUserActivity, { passive: true });
+    window.addEventListener("mousemove", handleUserActivity, { passive: true });
+    window.addEventListener("touchstart", handleUserActivity, { passive: true });
+    window.addEventListener("touchmove", handleUserActivity, { passive: true });
+    window.addEventListener("click", handleUserActivity, { passive: true });
+    window.addEventListener("keydown", handleUserActivity, { passive: true });
+
+    return () => {
+      if (inactivityTimeoutRef.current) {
+        clearTimeout(inactivityTimeoutRef.current);
+      }
+      window.removeEventListener("scroll", handleUserActivity);
+      window.removeEventListener("mousemove", handleUserActivity);
+      window.removeEventListener("touchstart", handleUserActivity);
+      window.removeEventListener("touchmove", handleUserActivity);
+      window.removeEventListener("click", handleUserActivity);
+      window.removeEventListener("keydown", handleUserActivity);
+    };
+  }, [resetInactivityTimer]);
 
   const navItems = [
     { title: t("home"), href: "/" },
@@ -21,10 +76,30 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 pt-3 pb-3 px-4 sm:px-6 lg:px-8 bg-white/85 backdrop-blur-md transition-all">
-      <div className="relative max-w-7xl mx-auto bg-white/95 rounded-2xl shadow-[0_10px_30px_-10px_rgba(15,23,42,0.08)]">
+    <motion.header
+      initial={{ y: 0, opacity: 1 }}
+      animate={{
+        y: isVisible ? 0 : -120,
+        opacity: isVisible ? 1 : 0,
+      }}
+      transition={{
+        duration: 0.45,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      onMouseEnter={() => {
+        isHoveredRef.current = true;
+        setIsVisible(true);
+        if (inactivityTimeoutRef.current) clearTimeout(inactivityTimeoutRef.current);
+      }}
+      onMouseLeave={() => {
+        isHoveredRef.current = false;
+        resetInactivityTimer();
+      }}
+      className="fixed top-0 inset-x-0 z-50 pt-3 pb-3 px-4 sm:px-6 lg:px-8 transition-colors pointer-events-auto"
+    >
+      <div className="relative max-w-7xl mx-auto bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_10px_30px_-10px_rgba(15,23,42,0.12)]">
         
-        {/* Animated Perimeter Border */}
+        {/* Animated Perimeter SVG Border */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none rounded-2xl z-20"
           xmlns="http://www.w3.org/2000/svg"
@@ -65,7 +140,7 @@ export default function Navbar() {
               </span>
             </a>
 
-            {/* NEW ANIMATED LANGUAGE SWITCHER (Replaces WhatsApp button) */}
+            {/* Language Toggle Button */}
             <motion.button
               onClick={toggleLanguage}
               whileHover={{ scale: 1.05 }}
@@ -73,13 +148,9 @@ export default function Navbar() {
               className="relative inline-flex items-center gap-2 bg-slate-50 hover:bg-blue-50/80 text-slate-800 hover:text-blue-600 border border-slate-200 hover:border-blue-400 text-sm font-extrabold px-4 py-2.5 rounded-full shadow-2xs transition-all duration-300 group overflow-hidden cursor-pointer"
               title={language === "en" ? "تبديل إلى العربية" : "Switch to English"}
             >
-              {/* Subtle background glow effect */}
               <span className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-              {/* Rotating Globe Icon */}
               <Globe className="w-4 h-4 text-blue-600 transition-transform duration-500 group-hover:rotate-180" />
 
-              {/* Animated Text Swap */}
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
                   key={language}
@@ -93,7 +164,6 @@ export default function Navbar() {
                 </motion.span>
               </AnimatePresence>
 
-              {/* Active Dot Indicator */}
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             </motion.button>
           </div>
@@ -155,7 +225,10 @@ export default function Navbar() {
             </motion.button>
 
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() => {
+                setMobileMenuOpen(!mobileMenuOpen);
+                resetInactivityTimer();
+              }}
               type="button"
               className="p-2.5 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-blue-600 transition-colors"
               aria-label="Toggle menu"
@@ -193,6 +266,7 @@ export default function Navbar() {
         )}
 
       </div>
-    </header>
+    </motion.header>
   );
 }
+

@@ -61,7 +61,8 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative overflow-hidden py-12 md:py-20 lg:py-24 bg-gradient-to-b from-[#FAFCFF] via-white to-slate-50 border-b border-slate-200/80">
+  // AFTER:
+<section className="relative overflow-hidden pt-28 sm:pt-36 lg:pt-40 pb-12 md:pb-20 lg:pb-24 bg-gradient-to-b from-[#FAFCFF] via-white to-slate-50 border-b border-slate-200/80">
       <div 
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
