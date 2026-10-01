@@ -1163,3 +1163,6 @@ function ServiceImageCard({ service, index, isAr, ctaText }: ServiceImageCardPro
     </motion.div>
   );
 }
+// git add .
+// git commit -m "Washing machine repair service page added with WhatsApp and Call Us floating widget for better user engagement."
+// git push origin main
