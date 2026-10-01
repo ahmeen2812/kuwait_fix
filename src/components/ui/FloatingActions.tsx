@@ -17,7 +17,8 @@ export default function FloatingActions() {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.7, delay: 1, ease: [0.16, 1, 0.3, 1] }}
       aria-label={isAr ? "أزرار التواصل السريع" : "Quick Contact Actions"}
-      className="fixed bottom-6 left-6 sm:bottom-8 sm:left-8 z-40 flex flex-col gap-3 pointer-events-auto select-none"
+     // AFTER:
+className="fixed bottom-5 left-4 sm:bottom-8 sm:left-8 z-40 flex flex-col gap-2.5 sm:gap-3 pointer-events-auto select-none scale-85 sm:scale-100 origin-bottom-left"
     >
       {/* 
         Container with Framer Motion `layout` prop:
