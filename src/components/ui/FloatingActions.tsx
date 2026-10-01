@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { PhoneCall } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { useLanguage } from "@/context/LanguageContext";
@@ -13,20 +13,27 @@ export default function FloatingActions() {
 
   return (
     <motion.aside
+      layout
       initial={{ opacity: 0, y: 50, scale: 0.85 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.7, delay: 1, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.7, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
       aria-label={isAr ? "أزرار التواصل السريع" : "Quick Contact Actions"}
-     // AFTER:
-className="fixed bottom-5 left-4 sm:bottom-8 sm:left-8 z-40 flex flex-col gap-2.5 sm:gap-3 pointer-events-auto select-none scale-85 sm:scale-100 origin-bottom-left"
+      /* 
+        OPPOSITE-SIDE DYNAMIC POSITIONING:
+        - In English (LTR): Content is on Left -> Floating buttons dock to the RIGHT (right-4 sm:right-8)
+        - In Arabic (RTL): Content is on Right -> Floating buttons dock to the LEFT (left-4 sm:left-8)
+      */
+      className={`fixed bottom-5 ${
+        isAr 
+          ? "left-4 sm:left-8 origin-bottom-left items-start" 
+          : "right-4 sm:right-8 origin-bottom-right items-end"
+      } z-40 flex flex-col gap-2.5 sm:gap-3 pointer-events-auto select-none scale-85 sm:scale-100 transition-all duration-500`}
     >
-      {/* 
-        Container with Framer Motion `layout` prop:
-        When language changes, the two buttons smoothly slide and swap priority order!
-      */}
       <motion.div 
         layout 
-        className={`flex ${isAr ? "flex-col" : "flex-col-reverse"} gap-3 items-start`}
+        className={`flex ${isAr ? "flex-col" : "flex-col-reverse"} gap-3 ${
+          isAr ? "items-start" : "items-end"
+        }`}
       >
 
         {/* ==========================================================
@@ -39,12 +46,12 @@ className="fixed bottom-5 left-4 sm:bottom-8 sm:left-8 z-40 flex flex-col gap-2.
           rel="noopener noreferrer"
           onMouseEnter={() => setIsHovered("whatsapp")}
           onMouseLeave={() => setIsHovered(null)}
-          whileHover={{ scale: 1.05, x: 4 }}
+          whileHover={{ scale: 1.05, x: isAr ? 4 : -4 }}
           whileTap={{ scale: 0.94 }}
           className="relative group flex items-center gap-3 bg-[#25D366] hover:bg-[#20bd5a] text-white px-4 py-3 sm:px-4.5 sm:py-3.5 rounded-full shadow-[0_10px_25px_-5px_rgba(37,211,102,0.45)] border border-emerald-400/40 backdrop-blur-xs transition-colors duration-300 overflow-hidden cursor-pointer"
           title={isAr ? "محادثة واتساب سريعة" : "Instant WhatsApp Chat"}
         >
-          {/* Ambient diagonal shimmer sweep every 5 seconds */}
+          {/* Ambient diagonal shimmer sweep */}
           <motion.div
             animate={{
               x: ["-150%", "250%"],
@@ -74,7 +81,7 @@ className="fixed bottom-5 left-4 sm:bottom-8 sm:left-8 z-40 flex flex-col gap-2.
           </div>
 
           {/* Text & Status Micro-Tag */}
-          <div className="flex flex-col text-left">
+          <div className={`flex flex-col ${isAr ? "text-right" : "text-left"}`}>
             <div className="flex items-center gap-1.5">
               <span className="text-sm sm:text-base font-black tracking-tight leading-none">
                 {isAr ? "واتساب" : "WhatsApp"}
@@ -95,7 +102,7 @@ className="fixed bottom-5 left-4 sm:bottom-8 sm:left-8 z-40 flex flex-col gap-2.
           href={`tel:${siteConfig.phoneRaw}`}
           onMouseEnter={() => setIsHovered("call")}
           onMouseLeave={() => setIsHovered(null)}
-          whileHover={{ scale: 1.05, x: 4 }}
+          whileHover={{ scale: 1.05, x: isAr ? 4 : -4 }}
           whileTap={{ scale: 0.94 }}
           className="relative group flex items-center gap-3 bg-[#0B1F33] hover:bg-[#1266A8] text-white px-4 py-3 sm:px-4.5 sm:py-3.5 rounded-full shadow-[0_10px_25px_-5px_rgba(11,31,51,0.5)] border-2 border-blue-400/50 backdrop-blur-xs transition-colors duration-300 overflow-hidden cursor-pointer"
           title={isAr ? "اتصال هاتفي مباشر" : "Direct Phone Call"}
@@ -117,7 +124,7 @@ className="fixed bottom-5 left-4 sm:bottom-8 sm:left-8 z-40 flex flex-col gap-2.
 
           {/* Realistic Phone Handset with Wiggle Attention */}
           <div className="relative flex-shrink-0 flex items-center justify-center">
-            {/* Blue Soundwave Pulse Effect */}
+            {/* Soundwave Pulse Effect */}
             <motion.div 
               animate={{
                 scale: [1, 1.25, 1],
@@ -148,7 +155,7 @@ className="fixed bottom-5 left-4 sm:bottom-8 sm:left-8 z-40 flex flex-col gap-2.
           </div>
 
           {/* Unified CTA Text & Phone Number */}
-          <div className="flex flex-col text-left">
+          <div className={`flex flex-col ${isAr ? "text-right" : "text-left"}`}>
             <span className="text-sm sm:text-base font-black tracking-tight leading-none text-white group-hover:text-amber-300 transition-colors">
               {isAr ? "اتصل بنا" : "Call us"}
             </span>
