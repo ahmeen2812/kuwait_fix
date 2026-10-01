@@ -22,7 +22,7 @@ const translations: Record<Language, Record<string, string>> = {
     heroTitlePart1: "خبراء صيانة",
     heroTitleHighlight: "الأجهزة المنزلية",
     heroTitlePart2: "في الكويت",
-    heroDesc: "نقدم خدمات صيانة فورية، معتمدة وموثوقة لجميع أنواع الغسالات والمكيفات والثلاجات في جميع مناطق الكويت. راحتكم وجودة أجهزتكم هي أولويتنا القصوى.",
+    heroDesc: "نقدم في هوميكسا خدمات صيانة فورية، معتمدة وموثوقة لجميع أنواع الغسالات والمكيفات والثلاجات في جميع مناطق الكويت. راحتكم وجودة أجهزتكم هي أولويتنا القصوى.",
     whatsappBtn: "واتساب",
   },
   en: {
@@ -36,7 +36,7 @@ const translations: Record<Language, Record<string, string>> = {
     heroTitlePart1: "Maintenance experts",
     heroTitleHighlight: "Home appliances",
     heroTitlePart2: "Kuwait",
-    heroDesc: "We offer prompt, certified, and reliable maintenance services for all types of washing machines, air conditioners, and refrigerators throughout Kuwait. Your comfort and the quality of your appliances are our top priority.",
+    heroDesc: "At Homexa, we offer prompt, certified, and reliable maintenance services for all types of washing machines, air conditioners, and refrigerators throughout Kuwait. Your comfort and the quality of your appliances are our top priority.",
     whatsappBtn: "WhatsApp",
   },
 };
@@ -44,10 +44,9 @@ const translations: Record<Language, Record<string, string>> = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>("en"); // Default matching your screenshot
+  const [language, setLanguage] = useState<Language>("en");
 
   useEffect(() => {
-    // Check saved language or default to en
     const saved = localStorage.getItem("preferred_lang") as Language;
     if (saved && (saved === "ar" || saved === "en")) {
       setLanguage(saved);

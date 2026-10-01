@@ -169,7 +169,7 @@ export default function Navbar() {
           </div>
 
           {/* 2. Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-7">
+         <nav aria-label="Main Navigation" className="hidden lg:flex items-center gap-7">
             {navItems.map((link) => (
               <Link
                 key={link.title}
@@ -182,60 +182,37 @@ export default function Navbar() {
           </nav>
 
           {/* 3. Brand Logo */}
-          <Link href="/" className="flex items-center gap-3.5 group">
-            <div className="flex flex-col text-right">
-              <div className="flex items-center gap-1.5 justify-end">
-                <span className="text-xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
-                  Kuwait Fix
-                </span>
-                <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-md border border-blue-200">
-                  Fix
-                </span>
-              </div>
-              <span className="text-[10px] font-bold text-slate-400 tracking-wider">
-                {t("brandTag")}
-              </span>
-            </div>
+       
+<Link href="/" className="flex items-center gap-3.5 group">
+  <div className="flex flex-col text-right">
+    <div className="flex items-center gap-1.5 justify-end">
+      <span className="text-xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
+        Homexa
+      </span>
+      <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-md border border-blue-200">
+        هوميكسا
+      </span>
+    </div>
+    <span className="text-[10px] font-bold text-slate-400 tracking-wider">
+      {t("brandTag")}
+    </span>
+  </div>
 
-            <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-blue-50 to-slate-100 border border-blue-200/80 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-xs group-hover:scale-105 group-hover:border-blue-400 transition-all duration-300">
-              {!logoError ? (
-                <Image
-                  src={siteConfig.logoPath}
-                  alt="Kuwait Fix"
-                  width={42}
-                  height={42}
-                  className="object-contain p-1"
-                  onError={() => setLogoError(true)}
-                />
-              ) : (
-                <Wrench className="w-5 h-5 text-blue-600 group-hover:rotate-45 transition-transform duration-300" />
-              )}
-            </div>
-          </Link>
-
-          {/* 4. Mobile Menu Toggle */}
-          <div className="flex lg:hidden items-center gap-2">
-            <motion.button
-              onClick={toggleLanguage}
-              whileTap={{ scale: 0.9 }}
-              className="p-2 rounded-lg border border-slate-200 text-xs font-bold flex items-center gap-1 bg-slate-50"
-            >
-              <Globe className="w-3.5 h-3.5 text-blue-600" />
-              <span>{t("langButtonText")}</span>
-            </motion.button>
-
-            <button
-              onClick={() => {
-                setMobileMenuOpen(!mobileMenuOpen);
-                resetInactivityTimer();
-              }}
-              type="button"
-              className="p-2.5 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-blue-600 transition-colors"
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
+  <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-blue-50 to-slate-100 border border-blue-200/80 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-xs group-hover:scale-105 group-hover:border-blue-400 transition-all duration-300">
+    {!logoError ? (
+      <Image
+        src={siteConfig.logoPath}
+        alt="Homexa"
+        width={42}
+        height={42}
+        className="object-contain p-1"
+        onError={() => setLogoError(true)}
+      />
+    ) : (
+      <span className="font-black text-sm text-blue-600">HX</span>
+    )}
+  </div>
+</Link>
 
         </div>
 
