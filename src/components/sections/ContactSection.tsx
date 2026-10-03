@@ -17,9 +17,10 @@ import {
 } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { useLanguage } from "@/context/LanguageContext";
+import { trackCallConversion, trackWhatsAppClick, trackFormSubmission } from "@/lib/gtag";
 
 export default function ContactSection() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isAr = language === "ar";
 
   // Kuwait Areas List (Bilingual)
@@ -70,12 +71,11 @@ export default function ContactSection() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Formspree AJAX Submission
+  // Formspree AJAX Submission with Google Ads Conversion
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.phone.trim() || !formData.email.trim()) return;
 
-    // Check honeypot
     if (formData._gotcha) return;
 
     setIsSubmitting(true);
@@ -102,6 +102,9 @@ export default function ContactSection() {
       });
 
       if (response.ok) {
+        // Trigger Google Ads Form Conversion
+        trackFormSubmission();
+
         setIsSuccess(true);
         setFormData({
           name: "",
@@ -210,10 +213,11 @@ export default function ContactSection() {
                 {isAr ? "معلومات التواصل المباشرة" : "Direct Contact Details"}
               </h3>
 
-              {/* Phone Channel */}
+              {/* Phone Channel with Conversion Tracking */}
               <a
                 href={`tel:${siteConfig.phoneRaw}`}
-                className="flex items-center gap-4 p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 hover:bg-blue-100/70 transition-colors group"
+                onClick={() => trackCallConversion(`tel:${siteConfig.phoneRaw}`)}
+                className="flex items-center gap-4 p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 hover:bg-blue-100/70 transition-colors group cursor-pointer"
               >
                 <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-108 transition-transform">
                   <PhoneCall className="w-5 h-5" />
@@ -246,12 +250,13 @@ export default function ContactSection() {
                 </div>
               </a>
 
-              {/* WhatsApp Channel */}
+              {/* WhatsApp Channel with Tracking */}
               <a
                 href={siteConfig.whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-4 p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 hover:bg-emerald-100/70 transition-colors group"
+                onClick={trackWhatsAppClick}
+                className="flex items-center gap-4 p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 hover:bg-emerald-100/70 transition-colors group cursor-pointer"
               >
                 <div className="w-12 h-12 rounded-xl bg-[#25D366] text-white flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-108 transition-transform">
                   <MessageCircle className="w-5 h-5 fill-current" />
@@ -369,8 +374,8 @@ export default function ContactSection() {
                   </h4>
                   <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
                     {isAr
-                      ? `شكراً لك. تم إرسال تفاصيل الحجز إلى إدارة كويت فيكس (${siteConfig.email}). سيتصل بك الفني خلال 10 دقائق.`
-                      : `Thank you. Your request was dispatched to Kuwait Fix (${siteConfig.email}). We will call you within 10 minutes.`}
+                      ? `شكراً لك. تم إرسال تفاصيل الحجز إلى إدارة هوميكسا (${siteConfig.email}). سيتصل بك الفني خلال 10 دقائق.`
+                      : `Thank you. Your request was dispatched to Homexa (${siteConfig.email}). We will call you within 10 minutes.`}
                   </p>
                   <div className="pt-4">
                     <button

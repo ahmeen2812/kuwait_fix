@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { PhoneCall, Menu, X, Wrench, Globe, MessageCircle } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { useLanguage } from "@/context/LanguageContext";
+import { trackCallConversion, trackWhatsAppClick } from "@/lib/gtag";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -116,18 +117,17 @@ export default function Navbar() {
           </defs>
         </svg>
 
-        {/* Inner Content Bar (Zero Overflow, Symmetrical on Mobile & Desktop) */}
+        {/* Inner Content Bar */}
         <div className="flex items-center justify-between h-16 sm:h-20 px-3.5 sm:px-6 lg:px-8 relative z-10 w-full">
           
           {/* ==========================================================
-              SIDE A: BRAND LOGO (Always pinned to start, compact on mobile)
+              SIDE A: BRAND LOGO
              ========================================================== */}
           <Link 
             href="/" 
             onClick={() => setMobileMenuOpen(false)}
             className="flex items-center gap-2 sm:gap-3.5 group flex-shrink-0 select-none"
           >
-            {/* Logo Emblem Icon */}
             <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-blue-50 to-slate-100 border border-blue-200/80 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-xs group-hover:scale-105 transition-transform">
               {!logoError ? (
                 <Image
@@ -143,7 +143,6 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Brand Titles */}
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="text-lg sm:text-xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
@@ -153,7 +152,6 @@ export default function Navbar() {
                   {siteConfig.brandName}
                 </span>
               </div>
-              {/* Subtitle hidden on small screens to save space */}
               <span className="text-[10px] font-bold text-slate-400 tracking-wider hidden sm:block">
                 {t("brandTag")}
               </span>
@@ -161,7 +159,7 @@ export default function Navbar() {
           </Link>
 
           {/* ==========================================================
-              SIDE B: DESKTOP NAVIGATION LINKS (Hidden on mobile)
+              SIDE B: DESKTOP NAVIGATION LINKS
              ========================================================== */}
           <nav aria-label="Main Navigation" className="hidden lg:flex items-center gap-6 xl:gap-8">
             {navItems.map((link) => (
@@ -177,14 +175,14 @@ export default function Navbar() {
 
           {/* ==========================================================
               SIDE C: ACTIONS, LANGUAGE SWITCHER & MOBILE HAMBURGER
-              (Always pinned to end, never hidden on mobile)
              ========================================================== */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             
-            {/* Desktop-Only Primary Contact Button */}
+            {/* Desktop Contact Us Button with Google Conversion Tracking */}
             <a
               href={`tel:${siteConfig.phoneRaw}`}
-              className="hidden sm:inline-flex items-center justify-center overflow-hidden bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-black px-4 sm:px-6 py-2.5 rounded-full shadow-sm hover:shadow-md hover:shadow-blue-500/25 transition-all duration-300 group"
+              onClick={() => trackCallConversion(`tel:${siteConfig.phoneRaw}`)}
+              className="hidden sm:inline-flex items-center justify-center overflow-hidden bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-black px-4 sm:px-6 py-2.5 rounded-full shadow-sm hover:shadow-md hover:shadow-blue-500/25 transition-all duration-300 group cursor-pointer"
             >
               <span className="relative flex items-center gap-1.5">
                 <span>{t("contactUs")}</span>
@@ -192,7 +190,7 @@ export default function Navbar() {
               </span>
             </a>
 
-            {/* Language Toggle Button (Visible on Mobile & Desktop) */}
+            {/* Language Toggle Button */}
             <motion.button
               onClick={toggleLanguage}
               whileHover={{ scale: 1.05 }}
@@ -207,14 +205,14 @@ export default function Navbar() {
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 hidden sm:inline-block animate-pulse" />
             </motion.button>
 
-            {/* Mobile Hamburger Button (lg:hidden, always visible on mobile) */}
+            {/* Mobile Hamburger Button */}
             <button
               type="button"
               onClick={() => {
                 setMobileMenuOpen(!mobileMenuOpen);
                 resetInactivityTimer();
               }}
-              className="flex lg:hidden p-2 rounded-xl text-slate-800 hover:bg-slate-100 hover:text-blue-600 transition-colors flex-shrink-0 border border-slate-200 focus:outline-none"
+              className="flex lg:hidden p-2 rounded-xl text-slate-800 hover:bg-slate-100 hover:text-blue-600 transition-colors flex-shrink-0 border border-slate-200 focus:outline-none cursor-pointer"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             >
               {mobileMenuOpen ? (
@@ -228,9 +226,7 @@ export default function Navbar() {
 
         </div>
 
-        {/* ==========================================================
-            MOBILE DRAWER MENU (Dropdown on Hamburger Tap)
-           ========================================================== */}
+        {/* Mobile Navigation Drawer */}
         <AnimatePresence>
           {mobileMenuOpen && (
             <motion.div
@@ -257,7 +253,8 @@ export default function Navbar() {
               <div className="pt-2 grid grid-cols-2 gap-2.5">
                 <a
                   href={`tel:${siteConfig.phoneRaw}`}
-                  className="w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl text-xs sm:text-sm shadow-sm"
+                  onClick={() => trackCallConversion(`tel:${siteConfig.phoneRaw}`)}
+                  className="w-full flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl text-xs sm:text-sm shadow-sm cursor-pointer"
                 >
                   <PhoneCall className="w-3.5 h-3.5" />
                   <span>{t("contactUs")}</span>
@@ -267,14 +264,14 @@ export default function Navbar() {
                   href={siteConfig.whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black py-3 rounded-xl text-xs sm:text-sm shadow-sm"
+                  onClick={trackWhatsAppClick}
+                  className="w-full flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black py-3 rounded-xl text-xs sm:text-sm shadow-sm cursor-pointer"
                 >
                   <MessageCircle className="w-3.5 h-3.5 fill-current" />
                   <span>{t("whatsappBtn")}</span>
                 </a>
               </div>
 
-              {/* Hotline Micro-Badge */}
               <div className="text-center pt-1 text-[11px] font-bold text-slate-400">
                 {isAr ? "طوارئ تكييف وغسالات 24 ساعة بالكويت" : "24/7 Appliance & AC Emergency Hotline"}
               </div>

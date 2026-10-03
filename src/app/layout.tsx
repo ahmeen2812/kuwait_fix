@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
 import { LanguageProvider } from "@/context/LanguageContext";
 import FloatingActions from "@/components/ui/FloatingActions";
 import JsonLdSchema from "@/components/seo/JsonLdSchema";
+import { GOOGLE_TAG_ID, CALL_CONVERSION_ID } from "@/lib/gtag";
 
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
@@ -12,10 +14,6 @@ const cairo = Cairo({
   display: "swap",
 });
 
-/* ==========================================================
-   HOMEXA GOOGLE SEARCH APPEARANCE METADATA
-   Configures the Title & Snippet shown on Google Search
-   ========================================================== */
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
@@ -24,46 +22,8 @@ export const metadata: Metadata = {
   },
   description:
     "شركة هوميكسا (Homexa) الرائدة في صيانة وتصليح الغسالات والمكيفات والثلاجات في جميع مناطق الكويت. فنيون متخصصون، كفالة معتمدة، وخدمة فورية خلال 45 دقيقة. اتصل: 50626275",
-  keywords: [
-    "Homexa",
-    "هوميكسا",
-    "هوميكسا الكويت",
-    "تصليح غسالات الكويت",
-    "تصليح مكيفات الكويت",
-    "تصليح ثلاجات الكويت",
-    "فني تكييف مركزي",
-    "صيانة أجهزة منزلية",
-  ],
-  authors: [{ name: "Homexa Kuwait" }],
-  creator: "Homexa",
-  publisher: "Homexa",
   alternates: {
     canonical: siteConfig.url,
-  },
-  openGraph: {
-    title: "Homexa | هوميكسا لصيانة الأجهزة المنزلية والتكييف بالكويت",
-    description:
-      "خدمة صيانة فورية لجميع مناطق الكويت خلال 45 دقيقة مع قطع غيار أصلية وكفالة معتمدة.",
-    url: siteConfig.url,
-    siteName: "Homexa",
-    locale: "ar_KW",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Homexa | هوميكسا لصيانة الأجهزة بالكويت",
-    description: "فنيون معتمدون لصيانة الغسالات والمكيفات والثلاجات في الكويت. اتصل: 50626275",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
   },
 };
 
@@ -75,14 +35,43 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Injects the Google Search Sitelinks & Business Schema */}
         <JsonLdSchema />
+
+        {/* 1. Google Tag (gtag.js) */}
+        <Script
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`}
+        />
+        <Script id="google-ads-gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GOOGLE_TAG_ID}');
+
+            // Google Ads Click-to-Call Conversion Function
+            function gtag_report_conversion(url) {
+              var callback = function () {
+                if (typeof(url) != 'undefined') {
+                  window.location = url;
+                }
+              };
+              gtag('event', 'conversion', {
+                  'send_to': '${CALL_CONVERSION_ID}',
+                  'value': 1.0,
+                  'currency': 'PKR',
+                  'event_callback': callback
+              });
+              return false;
+            }
+          `}
+        </Script>
       </head>
       <body className={`${cairo.className} bg-[#FAFCFF] text-slate-900 antialiased`}>
         <LanguageProvider>
           <main>{children}</main>
 
-          {/* Floating WhatsApp and Call Us Widget */}
+          {/* Floating WhatsApp and Contact Us Widget */}
           <FloatingActions />
         </LanguageProvider>
       </body>

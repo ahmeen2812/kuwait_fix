@@ -5,11 +5,22 @@ import { motion } from "framer-motion";
 import { PhoneCall } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { useLanguage } from "@/context/LanguageContext";
+import { trackCallConversion, trackWhatsAppClick } from "@/lib/gtag";
 
 export default function FloatingActions() {
   const { language } = useLanguage();
   const isAr = language === "ar";
   const [isHovered, setIsHovered] = useState<"whatsapp" | "call" | null>(null);
+
+  const handleCallClick = (e: React.MouseEvent) => {
+    // Fire Google Ads Conversion
+    trackCallConversion(`tel:${siteConfig.phoneRaw}`);
+  };
+
+  const handleWhatsAppClick = () => {
+    // Fire WhatsApp Event
+    trackWhatsAppClick();
+  };
 
   return (
     <motion.aside
@@ -18,11 +29,6 @@ export default function FloatingActions() {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.7, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
       aria-label={isAr ? "أزرار التواصل السريع" : "Quick Contact Actions"}
-      /* 
-        OPPOSITE-SIDE DYNAMIC POSITIONING:
-        - In English (LTR): Content is on Left -> Floating buttons dock to the RIGHT (right-4 sm:right-8)
-        - In Arabic (RTL): Content is on Right -> Floating buttons dock to the LEFT (left-4 sm:left-8)
-      */
       className={`fixed bottom-5 ${
         isAr 
           ? "left-4 sm:left-8 origin-bottom-left items-start" 
@@ -37,13 +43,14 @@ export default function FloatingActions() {
       >
 
         {/* ==========================================================
-            1. REALISTIC OFFICIAL WHATSAPP FLOATING BUTTON
+            1. WHATSAPP FLOATING BUTTON (With Google Event Tracking)
            ========================================================== */}
         <motion.a
           layout
           href={siteConfig.whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={handleWhatsAppClick}
           onMouseEnter={() => setIsHovered("whatsapp")}
           onMouseLeave={() => setIsHovered(null)}
           whileHover={{ scale: 1.05, x: isAr ? 4 : -4 }}
@@ -65,11 +72,9 @@ export default function FloatingActions() {
             className="absolute inset-0 w-1/2 h-full bg-white/25 transform -skew-x-20 pointer-events-none"
           />
 
-          {/* Genuine WhatsApp Official Emblem SVG */}
+          {/* WhatsApp Logo */}
           <div className="relative flex-shrink-0 flex items-center justify-center">
-            {/* Pulsing Live Beacon Ring */}
             <span className="absolute w-8 h-8 rounded-full bg-white/30 animate-ping opacity-75 pointer-events-none" />
-
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white flex items-center justify-center shadow-xs">
               <svg 
                 className="w-5 h-5 sm:w-5.5 sm:h-5.5 fill-[#25D366]" 
@@ -80,7 +85,7 @@ export default function FloatingActions() {
             </div>
           </div>
 
-          {/* Text & Status Micro-Tag */}
+          {/* Text & Status */}
           <div className={`flex flex-col ${isAr ? "text-right" : "text-left"}`}>
             <div className="flex items-center gap-1.5">
               <span className="text-sm sm:text-base font-black tracking-tight leading-none">
@@ -95,17 +100,18 @@ export default function FloatingActions() {
         </motion.a>
 
         {/* ==========================================================
-            2. REALISTIC LUXURY PHONE CALL BUTTON
+            2. PHONE CALL BUTTON (Renamed to "Contact us" + Conversion Tracking)
            ========================================================== */}
         <motion.a
           layout
           href={`tel:${siteConfig.phoneRaw}`}
+          onClick={handleCallClick}
           onMouseEnter={() => setIsHovered("call")}
           onMouseLeave={() => setIsHovered(null)}
           whileHover={{ scale: 1.05, x: isAr ? 4 : -4 }}
           whileTap={{ scale: 0.94 }}
           className="relative group flex items-center gap-3 bg-[#0B1F33] hover:bg-[#1266A8] text-white px-4 py-3 sm:px-4.5 sm:py-3.5 rounded-full shadow-[0_10px_25px_-5px_rgba(11,31,51,0.5)] border-2 border-blue-400/50 backdrop-blur-xs transition-colors duration-300 overflow-hidden cursor-pointer"
-          title={isAr ? "اتصال هاتفي مباشر" : "Direct Phone Call"}
+          title={isAr ? "اتصل بنا" : "Contact us"}
         >
           {/* Ambient diagonal sheen */}
           <motion.div
@@ -124,7 +130,6 @@ export default function FloatingActions() {
 
           {/* Realistic Phone Handset with Wiggle Attention */}
           <div className="relative flex-shrink-0 flex items-center justify-center">
-            {/* Soundwave Pulse Effect */}
             <motion.div 
               animate={{
                 scale: [1, 1.25, 1],
@@ -154,10 +159,10 @@ export default function FloatingActions() {
             </motion.div>
           </div>
 
-          {/* Unified CTA Text & Phone Number */}
+          {/* CHANGED TO: "Contact us" (EN) / "اتصل بنا" (AR) */}
           <div className={`flex flex-col ${isAr ? "text-right" : "text-left"}`}>
             <span className="text-sm sm:text-base font-black tracking-tight leading-none text-white group-hover:text-amber-300 transition-colors">
-              {isAr ? "اتصل بنا" : "Call us"}
+              {isAr ? "اتصل بنا" : "Contact us"}
             </span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span dir="ltr" className="text-[10px] sm:text-[11px] font-mono font-bold text-slate-300">

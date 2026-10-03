@@ -6,6 +6,7 @@ import { motion, Variants } from "framer-motion";
 import { PhoneCall, MessageCircle, Users } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { useLanguage } from "@/context/LanguageContext";
+import { trackCallConversion, trackWhatsAppClick } from "@/lib/gtag";
 
 export default function Hero() {
   const [imageError, setImageError] = useState(false);
@@ -61,8 +62,9 @@ export default function Hero() {
   };
 
   return (
-  // AFTER:
-<section className="relative overflow-hidden pt-28 sm:pt-36 lg:pt-40 pb-12 md:pb-20 lg:pb-24 bg-gradient-to-b from-[#FAFCFF] via-white to-slate-50 border-b border-slate-200/80">
+    <section className="relative overflow-hidden pt-28 sm:pt-36 lg:pt-40 pb-12 md:pb-20 lg:pb-24 bg-gradient-to-b from-[#FAFCFF] via-white to-slate-50 border-b border-slate-200/80">
+      
+      {/* Background Dots */}
       <div 
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
@@ -101,7 +103,7 @@ export default function Hero() {
                 {!imageError ? (
                   <Image
                     src={siteConfig.heroTeamImage}
-                    alt="Kuwait Fix Technicians"
+                    alt="Homexa Technicians in Kuwait"
                     fill
                     priority
                     sizes="(max-width: 1024px) 100vw, 620px"
@@ -114,7 +116,7 @@ export default function Hero() {
                       <Users className="w-8 h-8 text-blue-600" />
                     </div>
                     <h3 className="text-xl font-black text-slate-900 mb-1">
-                      Kuwait Fix Team
+                      Homexa Team
                     </h3>
                   </div>
                 )}
@@ -157,7 +159,7 @@ export default function Hero() {
               </motion.div>
             </div>
 
-            {/* CTAs */}
+            {/* CTAs with Google Ads Tracking */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -166,7 +168,8 @@ export default function Hero() {
             >
               <a
                 href={`tel:${siteConfig.phoneRaw}`}
-                className="inline-flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 border-2 border-slate-300/80 hover:border-blue-600 text-slate-800 hover:text-blue-600 text-base font-black px-8 py-3.5 rounded-full shadow-2xs hover:shadow-sm transition-all duration-300 hover:scale-[1.02] active:scale-95 group"
+                onClick={() => trackCallConversion(`tel:${siteConfig.phoneRaw}`)}
+                className="inline-flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 border-2 border-slate-300/80 hover:border-blue-600 text-slate-800 hover:text-blue-600 text-base font-black px-8 py-3.5 rounded-full shadow-2xs hover:shadow-sm transition-all duration-300 hover:scale-[1.02] active:scale-95 group cursor-pointer"
               >
                 <span>{t("contactUs")}</span>
                 <PhoneCall className="w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform duration-300" />
@@ -176,7 +179,8 @@ export default function Hero() {
                 href={siteConfig.whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative inline-flex items-center justify-center gap-2.5 overflow-hidden bg-[#25D366] hover:bg-[#1EBE5D] text-white text-base font-extrabold px-8 py-3.5 rounded-full shadow-sm hover:shadow-md hover:shadow-emerald-500/25 transition-all duration-300 hover:scale-[1.02] active:scale-95 group"
+                onClick={trackWhatsAppClick}
+                className="relative inline-flex items-center justify-center gap-2.5 overflow-hidden bg-[#25D366] hover:bg-[#1EBE5D] text-white text-base font-extrabold px-8 py-3.5 rounded-full shadow-sm hover:shadow-md hover:shadow-emerald-500/25 transition-all duration-300 hover:scale-[1.02] active:scale-95 group cursor-pointer"
               >
                 <span>{t("whatsappBtn")}</span>
                 <MessageCircle className="w-5 h-5 fill-current relative z-10" />
