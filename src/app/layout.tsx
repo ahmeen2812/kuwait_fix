@@ -14,6 +14,8 @@ const cairo = Cairo({
   display: "swap",
 });
 
+const GTM_ID = "GTM-T6VZCHNC";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
@@ -37,7 +39,18 @@ export default function RootLayout({
       <head>
         <JsonLdSchema />
 
-        {/* 1. Google Tag (gtag.js) */}
+        {/* 1. Google Tag Manager (GTM) Script */}
+        <Script id="google-tag-manager" strategy="afterInteractive">
+          {`
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','${GTM_ID}');
+          `}
+        </Script>
+
+        {/* 2. Google Ads (gtag.js) Script */}
         <Script
           strategy="afterInteractive"
           src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_TAG_ID}`}
@@ -68,6 +81,16 @@ export default function RootLayout({
         </Script>
       </head>
       <body className={`${cairo.className} bg-[#FAFCFF] text-slate-900 antialiased`}>
+        {/* 3. Google Tag Manager (noscript) - Required right after <body> */}
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
+
         <LanguageProvider>
           <main>{children}</main>
 
