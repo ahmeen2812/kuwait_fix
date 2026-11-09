@@ -14,7 +14,7 @@ const cairo = Cairo({
   display: "swap",
 });
 
-const GTM_ID = "GTM-T6VZCHNC";
+const GTM_ID = "GTM-P5BZ4MZH";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
