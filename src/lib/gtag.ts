@@ -1,5 +1,5 @@
-export const GOOGLE_TAG_ID = "AW-18488864536";
-export const CALL_CONVERSION_ID = "AW-18488864536/NPgDCMvIhY8dEJjelvBE";
+export const GOOGLE_TAG_ID = "AW-184357371368";
+export const CALL_CONVERSION_ID = "AW-18357371368/NPgDCMvIhY8dEJjelvBE";
 
 // 1. Tracks Click to Call (Exact conversion snippet from your Google Ads manager)
 export const trackCallConversion = (url?: string) => {
@@ -38,3 +38,4 @@ export const trackFormSubmission = () => {
     });
   }
 };
+
