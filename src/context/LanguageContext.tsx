@@ -44,22 +44,25 @@ const translations: Record<Language, Record<string, string>> = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>("en");
+  // Default language is now Arabic (ar)
+  const [language, setLanguage] = useState<Language>("ar");
 
   useEffect(() => {
+    // Check if user previously picked a language, otherwise default to Arabic
     const saved = localStorage.getItem("preferred_lang") as Language;
     if (saved && (saved === "ar" || saved === "en")) {
       setLanguage(saved);
       document.documentElement.dir = saved === "ar" ? "rtl" : "ltr";
       document.documentElement.lang = saved;
     } else {
-      document.documentElement.dir = "ltr";
-      document.documentElement.lang = "en";
+      setLanguage("ar");
+      document.documentElement.dir = "rtl";
+      document.documentElement.lang = "ar";
     }
   }, []);
 
   const toggleLanguage = () => {
-    const nextLang = language === "en" ? "ar" : "en";
+    const nextLang = language === "ar" ? "en" : "ar";
     setLanguage(nextLang);
     localStorage.setItem("preferred_lang", nextLang);
     document.documentElement.dir = nextLang === "ar" ? "rtl" : "ltr";
